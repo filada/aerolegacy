@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Aero Legacy Museum</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;1,9..40,300&display=swap" rel="stylesheet">
+  
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #0a0a0a;
+      --charcoal: #111111;
+      --steel: #1c1c1e;
+      --mid: #2a2a2d;
+      --warm: #e8d5b0;
+      --gold: #c9a84c;
+      --gold-dim: rgba(201,168,76,0.15);
+      --white: #f5f0e8;
+      --muted: #7a7a72;
+      --accent: #d4542a;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+    }
+
+    /* ---- NAV ---- */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.4rem 3rem;
+      background: linear-gradient(to bottom, rgba(10,10,10,0.95), transparent);
+    }
+
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      letter-spacing: 0.12em;
+      color: var(--warm);
+      text-decoration: none;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2.5rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--warm); }
+
+    .nav-cta {
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      padding: 0.5rem 1.4rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .nav-cta:hover {
+      background: var(--gold);
+      color: var(--black);
+    }
+
+    /* ---- HERO ---- */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-end;
+      padding: 0 3rem 5rem;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 70% 40%, rgba(201,168,76,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 50% at 20% 80%, rgba(212,84,42,0.05) 0%, transparent 50%),
+        linear-gradient(160deg, #0f0e0c 0%, #0a0a0a 50%, #0d0c0b 100%);
+    }
+
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 80% at 60% 40%, black 20%, transparent 70%);
+    }
+
+    .hero-plane {
+      position: absolute;
+      right: -4%;
+      top: 50%;
+      transform: translateY(-54%);
+      width: 72%;
+      opacity: 0;
+      animation: planeIn 1.8s cubic-bezier(0.22,1,0.36,1) 0.3s forwards;
+    }
+
+    @keyframes planeIn {
+      from { opacity: 0; transform: translateY(-50%) translateX(60px); }
+      to   { opacity: 1; transform: translateY(-54%) translateX(0); }
+    }
+
+    .hero-plane svg {
+      width: 100%;
+      height: auto;
+      filter: drop-shadow(0 40px 80px rgba(0,0,0,0.8));
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 580px;
+      opacity: 0;
+      animation: fadeUp 1s ease 0.6s forwards;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      border-left: 2px solid var(--gold);
+      padding-left: 0.8rem;
+      margin-bottom: 1.4rem;
+    }
+
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(4rem, 9vw, 8rem);
+      line-height: 0.92;
+      letter-spacing: 0.02em;
+      color: var(--warm);
+      margin-bottom: 1.6rem;
+    }
+
+    h1 em {
+      font-style: normal;
+      color: var(--gold);
+    }
+
+    .hero-desc {
+      font-size: 1rem;
+      line-height: 1.75;
+      color: var(--muted);
+      max-width: 420px;
+      margin-bottom: 2.5rem;
+      font-weight: 300;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .btn-primary {
+      background: var(--gold);
+      color: var(--black);
+      border: none;
+      padding: 0.85rem 2.2rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .btn-ghost {
+      background: transparent;
+      border: none;
+      color: var(--warm);
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.85rem 0;
+      transition: gap 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-ghost:hover { gap: 0.9rem; }
+
+    .btn-ghost::after {
+      content: '→';
+      font-size: 1rem;
+    }
+
+    .hero-stats {
+      position: absolute;
+      bottom: 5rem;
+      right: 3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.6rem;
+      z-index: 2;
+      opacity: 0;
+      animation: fadeUp 1s ease 1s forwards;
+    }
+
+    .stat {
+      text-align: right;
+    }
+
+    .stat-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.4rem;
+      color: var(--warm);
+      letter-spacing: 0.04em;
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 0.68rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--muted);
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      animation: fadeUp 1s ease 1.4s both;
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, var(--gold), transparent);
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.4; transform: scaleY(1); }
+      50% { opacity: 1; transform: scaleY(1.2); }
+    }
+
+    /* ---- TICKER ---- */
+    .ticker {
+      background: var(--gold);
+      color: var(--black);
+      padding: 0.6rem 0;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .ticker-track {
+      display: inline-block;
+      animation: ticker 30s linear infinite;
+      font-size: 0.72rem;
+      font-weight: 400;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    .ticker-sep {
+      display: inline-block;
+      margin: 0 1.8rem;
+      opacity: 0.5;
+    }
+
+    /* ---- SECTION SHARED ---- */
+    section {
+      padding: 6rem 3rem;
+    }
+
+    .section-tag {
+      font-size: 0.68rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      border-left: 2px solid var(--gold);
+      padding-left: 0.8rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      letter-spacing: 0.03em;
+      color: var(--warm);
+      line-height: 1;
+      margin-bottom: 1.2rem;
+    }
+
+    /* ---- EXHIBITS ---- */
+    .exhibits {
+      background: var(--charcoal);
+    }
+
+    .exhibits-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 3.5rem;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+
+    .exhibits-desc {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.7;
+      max-width: 380px;
+    }
+
+    .exhibits-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--mid);
+    }
+
+    .exhibit-card {
+      background: var(--charcoal);
+      padding: 2.5rem 2rem;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: background 0.3s;
+      text-decoration: none;
+      display: block;
+      color: inherit;
+    }
+
+    .exhibit-card::before {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--gold);
+      transform: scaleX(0);
+      transition: transform 0.35s cubic-bezier(0.22,1,0.36,1);
+      transform-origin: left;
+    }
+
+    .exhibit-card:hover { background: var(--steel); }
+    .exhibit-card:hover::before { transform: scaleX(1); }
+
+    .exhibit-era {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1rem;
+    }
+
+    .exhibit-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1.2rem;
+      display: block;
+      line-height: 1;
+    }
+
+    .exhibit-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.8rem;
+      letter-spacing: 0.04em;
+      color: var(--warm);
+      margin-bottom: 0.6rem;
+      line-height: 1;
+    }
+
+    .exhibit-sub {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+
+    .exhibit-link {
+      font-size: 0.7rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: gap 0.2s;
+    }
+
+    .exhibit-card:hover .exhibit-link { gap: 0.8rem; }
+
+    .exhibit-num {
+      position: absolute;
+      top: 2rem; right: 2rem;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 4rem;
+      color: rgba(201,168,76,0.06);
+      line-height: 1;
+    }
+
+    /* ---- FEATURE STRIP ---- */
+    .features {
+      background: var(--black);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+    }
+
+    .feature-text {
+      padding: 6rem 3rem;
+    }
+
+    .feature-body {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.8;
+      margin-bottom: 2rem;
+      max-width: 440px;
+    }
+
+    .feature-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .feature-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+      font-size: 0.85rem;
+      color: var(--warm);
+      letter-spacing: 0.02em;
+    }
+
+    .feature-list li::before {
+      content: '';
+      display: block;
+      width: 20px;
+      height: 1px;
+      background: var(--gold);
+      flex-shrink: 0;
+    }
+
+    .feature-visual {
+      background: var(--steel);
+      position: relative;
+      overflow: hidden;
+      min-height: 420px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .feature-visual-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 60% at 50% 50%, rgba(201,168,76,0.08) 0%, transparent 70%);
+    }
+
+    /* ÚPRAVA PRO 3D MODEL */
+    .cockpit-preview-3d {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    model-viewer {
+      width: 100%;
+      height: 380px;
+      outline: none;
+    }
+
+    .cockpit-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-top: 1rem;
+    }
+
+    /* ---- TIMELINE STRIP ---- */
+    .timeline {
+      background: var(--charcoal);
+      overflow: hidden;
+    }
+
+    .timeline-scroll {
+      display: flex;
+      gap: 0;
+      margin-top: 3.5rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .timeline-scroll::-webkit-scrollbar { display: none; }
+
+    .timeline-item {
+      flex: 0 0 240px;
+      padding: 2rem;
+      border-left: 1px solid var(--mid);
+      position: relative;
+      cursor: pointer;
+      transition: background 0.25s;
+    }
+
+    .timeline-item:hover { background: var(--steel); }
+
+    .timeline-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--gold);
+      border-radius: 50%;
+      margin-bottom: 1rem;
+    }
+
+    .timeline-item.muted .timeline-dot {
+      background: var(--mid);
+    }
+
+    .timeline-year {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem;
+      color: var(--warm);
+      line-height: 1;
+      margin-bottom: 0.4rem;
+    }
+
+    .timeline-item.muted .timeline-year { color: var(--muted); }
+
+    .timeline-event {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .timeline-event strong {
+      display: block;
+      color: var(--warm);
+      font-weight: 400;
+      margin-bottom: 0.2rem;
+    }
+
+    .timeline-item.muted .timeline-event strong { color: var(--muted); }
+
+    /* ---- CTA SECTION ---- */
+    .cta-section {
+      background: var(--black);
+      text-align: center;
+      padding: 7rem 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-bg {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 70% at 50% 50%, rgba(201,168,76,0.06) 0%, transparent 65%);
+    }
+
+    .cta-section .section-title {
+      font-size: clamp(3rem, 7vw, 6rem);
+      margin-bottom: 1.2rem;
+    }
+
+    .cta-desc {
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.7;
+      max-width: 480px;
+      margin: 0 auto 3rem;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--mid);
+      color: var(--warm);
+      padding: 0.85rem 2.2rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-outline:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    /* ---- FOOTER ---- */
+    footer {
+      background: var(--charcoal);
+      border-top: 1px solid var(--mid);
+      padding: 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+
+    .footer-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.3rem;
+      letter-spacing: 0.1em;
+      color: var(--warm);
+    }
+
+    .footer-copy {
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .footer-links a {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover { color: var(--warm); }
+
+    /* ---- SCROLL REVEAL ---- */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 768px) {
+      nav { padding: 1.2rem 1.5rem; }
+      .nav-links { display: none; }
+      .hero { padding: 0 1.5rem 4rem; }
+      .hero-plane { width: 110%; right: -20%; opacity: 0.3; }
+      .hero-stats { display: none; }
+      section { padding: 4rem 1.5rem; }
+      .exhibits-grid { grid-template-columns: 1fr; }
+      .features { grid-template-columns: 1fr; }
+      footer { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="nav-logo">Aero Legacy</a>
+  <ul class="nav-links">
+    <li><a href="#exhibits">Exhibits</a></li>
+    <li><a href="#experience">Experience</a></li>
+    <li><a href="#timeline">History</a></li>
+    <li><a href="#visit">Visit</a></li>
+  </ul>
+  <button class="nav-cta">Plan Your Visit</button>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+
+  <div class="hero-plane">
+    <svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg" fill="none">
+      <ellipse cx="440" cy="210" rx="340" ry="38" fill="#1a1a18" stroke="#c9a84c" stroke-width="0.6" stroke-opacity="0.3"/>
+      <path d="M100 210 Q60 208 30 215 Q20 218 30 222 Q60 226 100 210Z" fill="#1a1a18" stroke="#c9a84c" stroke-width="0.5" stroke-opacity="0.25"/>
+      <path d="M780 210 Q820 206 860 200 Q870 199 860 220 Q820 215 780 210Z" fill="#1a1a18" stroke="#c9a84c" stroke-width="0.5" stroke-opacity="0.2"/>
+      <path d="M350 210 L200 330 L160 325 L220 206 Z" fill="#151512" stroke="#c9a84c" stroke-width="0.5" stroke-opacity="0.25"/>
+      <path d="M350 210 L200 90 L160 95 L220 214 Z" fill="#151512" stroke="#c9a84c" stroke-width="0.5" stroke-opacity="0.25"/>
+      <ellipse cx="210" cy="320" rx="30" ry="10" fill="#111" stroke="#c9a84c" stroke-width="0.4" stroke-opacity="0.3"/>
+      <ellipse cx="210" cy="100" rx="30" ry="10" fill="#111" stroke="#c9a84c" stroke-width="0.4" stroke-opacity="0.3"/>
+      <path d="M740 210 L730 140 L760 150 L780 210 Z" fill="#151512" stroke="#c9a84c" stroke-width="0.5" stroke-opacity="0.2"/>
+      <path d="M750 210 L850 190 L850 230 L750 210 Z" fill="#151512" stroke="#c9a84c" stroke-width="0.4" stroke-opacity="0.2"/>
+      <ellipse cx="148" cy="205" rx="20" ry="10" fill="none" stroke="#c9a84c" stroke-width="0.8" stroke-opacity="0.4"/>
+      <ellipse cx="148" cy="205" rx="14" ry="7" fill="rgba(201,168,76,0.06)"/>
+      <g stroke="#c9a84c" stroke-width="0.5" stroke-opacity="0.2" fill="rgba(201,168,76,0.04)">
+        <ellipse cx="240" cy="206" rx="7" ry="5"/><ellipse cx="270" cy="205" rx="7" ry="5"/><ellipse cx="300" cy="205" rx="7" ry="5"/>
+        <ellipse cx="330" cy="205" rx="7" ry="5"/><ellipse cx="360" cy="204" rx="7" ry="5"/><ellipse cx="390" cy="204" rx="7" ry="5"/>
+        <ellipse cx="420" cy="204" rx="7" ry="5"/><ellipse cx="450" cy="204" rx="7" ry="5"/><ellipse cx="480" cy="204" rx="7" ry="5"/>
+        <ellipse cx="510" cy="205" rx="7" ry="5"/><ellipse cx="540" cy="205" rx="7" ry="5"/><ellipse cx="570" cy="206" rx="7" ry="5"/>
+        <ellipse cx="600" cy="207" rx="7" ry="5"/><ellipse cx="630" cy="208" rx="7" ry="5"/><ellipse cx="660" cy="208" rx="7" ry="5"/>
+        <ellipse cx="690" cy="209" rx="7" ry="5"/>
+      </g>
+      <ellipse cx="440" cy="248" rx="300" ry="18" fill="rgba(201,168,76,0.04)"/>
+    </svg>
+  </div>
+
+  <div class="hero-content">
+    <span class="hero-tag">Interactive Aviation Museum</span>
+    <h1>Where<br/><em>History</em><br/>Flies</h1>
+    <p class="hero-desc">Step inside a century of flight. Explore rare aircraft up close, hear the engines roar, and experience aviation history like never before.</p>
+    <div class="hero-actions">
+      <a href="#exhibits" class="btn-primary">Explore Exhibits</a>
+      <a href="#experience" class="btn-ghost">Virtual Tour</a>
+    </div>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">120+</div><div class="stat-label">Aircraft</div></div>
+    <div class="stat"><div class="stat-num">8</div><div class="stat-label">Hangars</div></div>
+    <div class="stat"><div class="stat-num">1923</div><div class="stat-label">Est.</div></div>
+  </div>
+
+  <div class="scroll-hint">
+    <div class="scroll-line"></div>
+    Scroll
+  </div>
+</section>
+
+<div class="ticker">
+  <span class="ticker-track">
+    Wright Brothers 1903 <span class="ticker-sep">✦</span> Spitfire Mk.I <span class="ticker-sep">✦</span> Boeing 747 Jumbo Jet <span class="ticker-sep">✦</span> Concorde SST <span class="ticker-sep">✦</span> F-86 Sabre <span class="ticker-sep">✦</span> SR-71 Blackbird <span class="ticker-sep">✦</span> Apollo Lunar Module <span class="ticker-sep">✦</span> Space Shuttle Orbiter <span class="ticker-sep">✦</span>
+    Wright Brothers 1903 <span class="ticker-sep">✦</span> Spitfire Mk.I <span class="ticker-sep">✦</span> Boeing 747 Jumbo Jet <span class="ticker-sep">✦</span> Concorde SST <span class="ticker-sep">✦</span> F-86 Sabre <span class="ticker-sep">✦</span> SR-71 Blackbird <span class="ticker-sep">✦</span> Apollo Lunar Module <span class="ticker-sep">✦</span> Space Shuttle Orbiter <span class="ticker-sep">✦</span>
+  </span>
+</div>
+
+<section class="exhibits" id="exhibits">
+  <div class="exhibits-header reveal">
+    <div>
+      <span class="section-tag">The Collection</span>
+      <h2 class="section-title">Featured Exhibits</h2>
+    </div>
+    <p class="exhibits-desc">From the first fragile biplanes to supersonic jets — each aircraft tells the story of human ambition pushing past the impossible.</p>
+  </div>
+
+  <div class="exhibits-grid reveal">
+    <a href="#" class="exhibit-card">
+      <div class="exhibit-num">01</div>
+      <span class="exhibit-era">1903 – 1939</span>
+      <span class="exhibit-icon">✈</span>
+      <h3 class="exhibit-name">Pioneers of Flight</h3>
+      <p class="exhibit-sub">The first powered machines that dared to leave the ground — from Kitty Hawk to the golden age of aviation.</p>
+      <span class="exhibit-link">View Exhibit →</span>
+    </a>
+    <a href="#" class="exhibit-card">
+      <div class="exhibit-num">02</div>
+      <span class="exhibit-era">1939 – 1945</span>
+      <span class="exhibit-icon">🛩</span>
+      <h3 class="exhibit-name">Wings of War</h3>
+      <p class="exhibit-sub">The aircraft that defined the Second World War. Spitfires, Mustangs, Zeros, and the bombers that changed history.</p>
+      <span class="exhibit-link">View Exhibit →</span>
+    </a>
+    <a href="#" class="exhibit-card">
+      <div class="exhibit-num">03</div>
+      <span class="exhibit-era">1945 – Present</span>
+      <span class="exhibit-icon">🚀</span>
+      <h3 class="exhibit-name">The Jet Age</h3>
+      <p class="exhibit-sub">Breaking the sound barrier, crossing oceans in hours, and reaching for the stars. The era of speed and exploration.</p>
+      <span class="exhibit-link">View Exhibit →</span>
+    </a>
+  </div>
+</section>
+
+<div class="features" id="experience">
+  <div class="feature-text reveal">
+    <span class="section-tag">The Experience</span>
+    <h2 class="section-title">More Than<br/>A Museum</h2>
+    <p class="feature-body">Step inside a living, breathing piece of aviation history. Our interactive exhibits put you in the pilot's seat — with immersive sound, 3D modely you can rotate and explore, and stories told by the people who were there.</p>
+    <ul class="feature-list">
+      <li>Interactive 3D aircraft you can rotate &amp; inspect</li>
+      <li>Authentic engine sounds and cockpit audio</li>
+      <li>Cockpit simulator with real controls</li>
+      <li>Guided tours with audio narration</li>
+      <li>Archival film and photography</li>
+    </ul>
+  </div>
+  <div class="feature-visual">
+    <div class="feature-visual-bg"></div>
+    <div class="cockpit-preview-3d reveal">
+      <model-viewer 
+        src="assets/cockpit.glb" 
+        alt="Aero Legacy Cockpit 3D Model"
+        auto-rotate 
+        camera-controls 
+        enable-pan
+        shadow-intensity="1" 
+        environment-image="neutral"
+        exposure="1"
+        touch-action="pan-y">
+      </model-viewer>
+      <div class="cockpit-label">Interactive Cockpit – Rotate & Zoom</div>
+    </div>
+  </div>
+</div>
+
+<section class="timeline" id="timeline">
+  <div class="reveal">
+    <span class="section-tag">A Century of Flight</span>
+    <h2 class="section-title">Aviation History</h2>
+  </div>
+  <div class="timeline-scroll">
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-year">1903</div>
+      <div class="timeline-event"><strong>First Powered Flight</strong>Wright Brothers, Kitty Hawk. 12 seconds that changed everything.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-year">1927</div>
+      <div class="timeline-event"><strong>Atlantic Crossing</strong>Lindbergh flies solo from New York to Paris. 33.5 hours. Non-stop.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-year">1939</div>
+      <div class="timeline-event"><strong>Jet Engine Born</strong>Frank Whittle's invention takes flight, beginning a new era of aviation.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-year">1947</div>
+      <div class="timeline-event"><strong>Sound Barrier Broken</strong>Chuck Yeager in the Bell X-1. Mach 1 was just the beginning.</div>
+    </div>
+    <div class="timeline-item muted">
+      <div class="timeline-dot"></div>
+      <div class="timeline-year">1969</div>
+      <div class="timeline-event"><strong>Moon Landing</strong>Apollo 11. The greatest journey in human history begins with a rocket.</div>
+    </div>
+    <div class="timeline-item muted">
+      <div class="timeline-dot"></div>
+      <div class="timeline-year">1976</div>
+      <div class="timeline-event"><strong>Concorde</strong>Supersonic passenger travel becomes reality. London to New York: 3.5 hours.</div>
+    </div>
+    <div class="timeline-item muted">
+      <div class="timeline-dot"></div>
+      <div class="timeline-year">2004</div>
+      <div class="timeline-event"><strong>SpaceShipOne</strong>First private spacecraft reaches space. A new chapter begins.</div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section" id="visit">
+  <div class="cta-bg"></div>
+  <div style="position:relative;z-index:1">
+    <span class="section-tag" style="display:inline-block">Open Year-Round</span>
+    <h2 class="section-title reveal">Come See<br/>History</h2>
+    <p class="cta-desc reveal">The museum is open Tuesday through Sunday, 9am – 5pm. Group tours, school visits, and private events available on request.</p>
+    <div class="cta-buttons reveal">
+      <a href="#" class="btn-primary">Book Tickets</a>
+      <a href="#" class="btn-outline">Group Bookings</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">Aero Legacy Museum</div>
+  <ul class="footer-links">
+    <li><a href="#">Exhibits</a></li>
+    <li><a href="#">Visit</a></li>
+    <li><a href="#">Education</a></li>
+    <li><a href="#">Contact</a></li>
+  </ul>
+  <span class="footer-copy">© 2026 Aero Legacy Museum. All rights reserved.</span>
+</footer>
+
+<script>
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  reveals.forEach(el => observer.observe(el));
+
+  // Nav transparency on scroll
+  const nav = document.querySelector('nav');
+  window.addEventListener('scroll', () => {
+    nav.style.background = window.scrollY > 60
+      ? 'rgba(10,10,10,0.96)'
+      : 'linear-gradient(to bottom, rgba(10,10,10,0.95), transparent)';
+  });
+</script>
+</body>
+</html>
