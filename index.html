@@ -187,6 +187,14 @@
       text-decoration: none; display: inline-block;
     }
     .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+
+    /* Přidaná třída pro prodloužení spodního tlačítka */
+    .btn-quiz {
+      padding-left: 4.5rem;
+      padding-right: 4.5rem;
+      text-align: center;
+    }
+
     .btn-ghost {
       background: transparent;
       border: 1px solid rgba(232,213,176,0.25);
@@ -423,6 +431,7 @@
       section, .cockpit-text { padding: 4rem 1.5rem; }
       .nations-grid { grid-template-columns: 1fr; }
       footer { flex-direction: column; text-align: center; }
+      .btn-quiz { padding-left: 1.5rem; padding-right: 1.5rem; width: 100%; } /* Přizpůsobení pro mobily */
     }
 
 
@@ -490,6 +499,8 @@
         data-en="Explore by Nation" data-cs="Prozkoumat podle národa">Explore by Nation</a>
       <a href="#cockpit" class="btn-ghost"
         data-en="Enter Cockpit" data-cs="Vstoupit do kokpitu">Enter Cockpit</a>
+      <a href="quiz.html" class="btn-primary btn-quiz"
+        data-en="Explored all? Do our quick quiz!" data-cs="Víte vše? Ověřte si znalosti naším quízem!">Explored all? Do our quick quiz!</a>
     </div>
   </div>
   <div class="hero-stats">
@@ -563,7 +574,7 @@
 
   <div class="nations-grid reveal">
 
-    <a href="usa.html" class="nation-card">
+    <a href="us.html" class="nation-card">
       <div class="nation-inner">
         <img src="assets/usa.png" alt="USA" class="nation-flag"/>
         <div class="nation-name" data-en="United States" data-cs="Spojené státy">United States</div>
@@ -695,27 +706,28 @@
 <!-- TIMELINE -->
 <section class="timeline" id="timeline">
   <div class="reveal">
-    <span class="section-tag" data-en="Military Aviation History" data-cs="Historie vojenského letectví">Military Aviation History</span>
+    <span class="section-tag" data-en="Aviation History" data-cs="Historie letectví">Aviation History</span>
     <h2 class="section-title">
-      <span data-en="A Century of" data-cs="Století">A Century of</span><br/>
-      <span data-en="Air Power" data-cs="vzdušné moci">Air Power</span>
+      <span data-en="Biggest milestones" data-cs="Největší milníky">Biggest milestones</span><br/>
+      <span data-en="in aviation" data-cs="v letectví">in aviation</span>
     </h2>
   </div>
   <div class="timeline-scroll">
     <div class="timeline-item">
       <div class="timeline-dot"></div>
-      <div class="timeline-year">1915</div>
+      <div class="timeline-year">1903</div>
       <div class="timeline-event">
-        <strong data-en="First Fighter Plane" data-cs="První stíhačka">First Fighter Plane</strong>
-        <span data-en="Fokker Eindecker — synchronised gun fires through the propeller arc." data-cs="Fokker Eindecker — synchronizovaný kulomet střílí skrz oblouk vrtule.">Fokker Eindecker — synchronised gun fires through the propeller arc.</span>
+        <strong data-en="First Plane" data-cs="První letadlo">First Plane</strong>
+        <span data-en="The Wright flyer was the first self propelled plane ever" data-cs="Wrigh Flyer bylo první poháněné letadlo na světě">Fokker Eindecker — synchronised gun fires through the propeller arc.</span>
       </div>
     </div>
     <div class="timeline-item">
       <div class="timeline-dot"></div>
-      <div class="timeline-year">1939</div>
+      <div class="timeline-year">1927</div>
       <div class="timeline-event">
-        <strong data-en="WWII Air War Begins" data-cs="Začíná letecká válka">WWII Air War Begins</strong>
-        <span data-en="Bf 109, Spitfire, Zero — the golden age of propeller combat." data-cs="Bf 109, Spitfire, Zero — zlatý věk vrtulového boje.">Bf 109, Spitfire, Zero — the golden age of propeller combat.</span>
+        <strong data-en="First Solo Nonstop Transatlantic Flight" data-cs="První sólový nepřetržitý transatlantický let">First Solo Nonstop Transatlantic Flight</strong>
+        <span data-en="Charles Lindbergh completed a grueling 33.5-hour flight from New York to Paris, becoming the first person to fly solo and nonstop across the Atlantic Ocean." 
+        data-cs="Charles Lindbergh dokončil náročný 33,5 hodiny dlouhý let z New Yorku do Paříže a stal se prvním člověkem, který sám a bez mezipřistání přeletěl Atlantský oceán.">Charles Lindbergh completed a grueling 33.5-hour flight from New York to Paris, becoming the first person to fly solo and nonstop across the Atlantic Ocean.</span>
       </div>
     </div>
     <div class="timeline-item">
@@ -723,15 +735,16 @@
       <div class="timeline-year">1944</div>
       <div class="timeline-event">
         <strong data-en="First Combat Jet" data-cs="První bojový tryskáč">First Combat Jet</strong>
-        <span data-en="Me 262 enters service. The jet age of warfare begins." data-cs="Me 262 vstupuje do provozu. Začíná éra tryskáčů ve válce.">Me 262 enters service. The jet age of warfare begins.</span>
+        <span data-en="Me 262 entered service thus the jet age of warfare begun." data-cs="Me 262 vstoupil do provozu tím začala éra tryskáčů ve válce.">Me 262 enters service. The jet age of warfare begins.</span>
       </div>
     </div>
     <div class="timeline-item">
       <div class="timeline-dot"></div>
-      <div class="timeline-year">1950</div>
+      <div class="timeline-year">1947</div>
       <div class="timeline-event">
-        <strong data-en="Korea: Jets vs Jets" data-cs="Korea: Tryskáče proti tryskáčům">Korea: Jets vs Jets</strong>
-        <span data-en="F-86 Sabre vs MiG-15. The first all-jet air battles in history." data-cs="F-86 Sabre vs MiG-15. První čistě tryskové vzdušné bitvy v historii.">F-86 Sabre vs MiG-15. The first all-jet air battles in history.</span>
+        <strong data-en="First supersonic plane" data-cs="První nadzvukové letadlo">First supersonic plane</strong>
+        <span data-en="Piloted by U.S. Air Force Captain Chuck Yeager, the rocket-powered Bell X-1 became the first aircraft to exceed the speed of sound (Mach 1) in level flight." 
+        data-cs="Raketou poháněný letoun Bell X-1, pilotovaný kapitánem amerického letectva Chuckem Yeagerem, se stal prvním letadlem, které ve vodorovném letu překonalo rychlost zvuku (Mach 1).">Piloted by U.S. Air Force Captain Chuck Yeager, the rocket-powered Bell X-1 became the first aircraft to exceed the speed of sound (Mach 1) in level flight.</span>
       </div>
     </div>
     <div class="timeline-item dim">
@@ -837,6 +850,15 @@
         heroVideo.currentTime = heroVideo.duration;
       });
     }
+
+  const clickSound = new Audio("assets/click.mp3");
+  clickSound.volume = 0.005; 
+
+  document.addEventListener("mousedown", () => {
+  const sound = clickSound.cloneNode();
+  sound.volume = clickSound.volume; // keep same volume
+  sound.play();
+  });
 </script>
 </body>
 </html>

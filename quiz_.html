@@ -1,0 +1,483 @@
+
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --gold:#c9a84c;--black:#0a0a0a;--charcoal:#111;--steel:#1c1c1e;
+    --mid:#2a2a2d;--warm:#e8d5b0;--muted:#7a7a72;
+    --ww2:#c0392b;--cold:#2471a3;--present:#1e8449;
+  }
+  body{background:var(--black);color:var(--warm);font-family:'DM Sans',system-ui,sans-serif;font-weight:300}
+  .screen{display:none;flex-direction:column;align-items:center;min-height:500px;padding:2rem 1.5rem}
+  .screen.active{display:flex}
+  h1{font-family:'Bebas Neue',impact,sans-serif;font-size:3rem;letter-spacing:.08em;color:var(--warm);line-height:1}
+  h2{font-family:'Bebas Neue',impact,sans-serif;font-size:2rem;letter-spacing:.06em;color:var(--warm);line-height:1}
+  .tag{font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);border-left:2px solid var(--gold);padding-left:.6rem;margin-bottom:.8rem}
+  .sub{font-size:.85rem;color:var(--muted);line-height:1.7;max-width:440px;text-align:center;margin-top:.5rem}
+  .btn{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 2rem;background:var(--gold);color:var(--black);border:none;font-family:inherit;font-size:.78rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:opacity .2s,transform .15s}
+  .btn:hover{opacity:.85;transform:translateY(-1px)}
+  .btn-ghost{background:transparent;border:1px solid rgba(232,213,176,.25);color:var(--warm);font-size:.75rem;padding:.6rem 1.4rem}
+  .btn-ghost:hover{border-color:var(--gold)}
+
+  /* ── HOME ── */
+  #screen-home{gap:1.2rem;justify-content:center;text-align:center}
+  .mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--mid);width:100%;max-width:520px;margin:1.5rem 0}
+  .mode-card{background:var(--charcoal);padding:1.4rem 1rem;text-align:center;cursor:pointer;transition:background .2s;border:2px solid transparent}
+  .mode-card:hover{background:var(--steel)}
+  .mode-card.selected{border-color:var(--gold);background:var(--steel)}
+  .mode-icon{font-size:1.6rem;margin-bottom:.5rem}
+  .mode-label{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .mode-title{font-size:.9rem;color:var(--warm);margin-top:.2rem}
+  .name-row{display:flex;gap:.5rem;width:100%;max-width:360px;margin-top:.5rem}
+  .name-input{flex:1;background:var(--steel);border:1px solid var(--mid);color:var(--warm);padding:.6rem 1rem;font-family:inherit;font-size:.85rem;outline:none;transition:border-color .2s}
+  .name-input:focus{border-color:var(--gold)}
+
+  /* ── QUIZ ── */
+  #screen-quiz{gap:0;width:100%;max-width:640px;margin:0 auto}
+  .progress-bar-wrap{width:100%;height:3px;background:var(--mid);margin-bottom:1.5rem}
+  .progress-bar-fill{height:3px;background:var(--gold);transition:width .4s ease}
+  .q-header{display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:.3rem}
+  .q-counter{font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+  .q-score-live{font-family:'Bebas Neue',impact,sans-serif;font-size:1.2rem;color:var(--gold)}
+  .q-type-badge{display:inline-block;padding:.2rem .7rem;font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;border:1px solid;margin-bottom:.8rem;border-radius:0}
+  .badge-sound{color:#2471a3;border-color:#2471a3}
+  .badge-silhouette{color:#c0392b;border-color:#c0392b}
+  .badge-trivia{color:var(--gold);border-color:var(--gold)}
+  .q-text{font-size:1.05rem;color:var(--warm);line-height:1.55;margin-bottom:1.4rem;min-height:48px}
+
+  /* Silhouette */
+  .silhouette-wrap{width:100%;height:180px;display:flex;align-items:center;justify-content:center;background:var(--steel);margin-bottom:1.2rem;position:relative;overflow:hidden}
+  .silhouette-svg{filter:brightness(0);transition:filter .5s}
+  .silhouette-svg.revealed{filter:brightness(1)}
+
+  /* Sound button */
+  .sound-play-btn{display:flex;align-items:center;gap:.6rem;padding:.6rem 1.4rem;border:1px solid var(--mid);background:transparent;color:var(--muted);font-family:inherit;font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;margin-bottom:1.2rem;transition:border-color .2s,color .2s;cursor:pointer}
+  .sound-play-btn:hover,.sound-play-btn.playing{border-color:var(--gold);color:var(--gold)}
+  .wave{display:flex;gap:2px;align-items:center;height:14px;opacity:0;transition:opacity .2s}
+  .sound-play-btn.playing .wave{opacity:1}
+  .wb{width:2px;border-radius:1px;background:var(--gold);animation:wb .8s ease-in-out infinite}
+  .wb:nth-child(1){height:4px;animation-delay:0s}
+  .wb:nth-child(2){height:10px;animation-delay:.12s}
+  .wb:nth-child(3){height:14px;animation-delay:.24s}
+  .wb:nth-child(4){height:8px;animation-delay:.36s}
+  @keyframes wb{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+
+  /* Answers */
+  .answers-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--mid);width:100%}
+  .ans-btn{background:var(--charcoal);border:none;color:var(--warm);font-family:inherit;font-size:.82rem;padding:1rem 1.2rem;text-align:left;cursor:pointer;transition:background .15s;position:relative;border:2px solid transparent}
+  .ans-btn:hover:not(.disabled){background:var(--steel)}
+  .ans-btn.correct{background:rgba(30,132,73,.18)!important;border-color:var(--present)!important;color:#6fcf97}
+  .ans-btn.wrong{background:rgba(192,57,43,.15)!important;border-color:var(--ww2)!important;color:#e07070}
+  .ans-btn.disabled{cursor:default}
+  .ans-letter{font-family:'Bebas Neue',impact,sans-serif;font-size:1rem;color:var(--gold);margin-right:.5rem}
+  .timer-bar-wrap{width:100%;height:2px;background:var(--mid);margin-bottom:.8rem}
+  .timer-bar-fill{height:2px;background:var(--gold);transition:width .05s linear}
+  .feedback-row{height:28px;display:flex;align-items:center;gap:.6rem;font-size:.75rem;margin-top:.8rem}
+  .feedback-correct{color:#6fcf97}
+  .feedback-wrong{color:#e07070}
+  .pts-badge{font-family:'Bebas Neue',impact,sans-serif;font-size:1.1rem;color:var(--gold);opacity:0;transition:opacity .3s}
+  .pts-badge.show{opacity:1}
+
+  /* ── RESULTS ── */
+  #screen-results{gap:1.2rem;text-align:center;justify-content:center}
+  .score-display{font-family:'Bebas Neue',impact,sans-serif;font-size:5rem;color:var(--gold);line-height:1}
+  .score-label{font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-top:-.3rem}
+  .rank-badge{display:inline-block;padding:.35rem 1.2rem;border:1px solid var(--gold);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin:.5rem 0}
+  .results-breakdown{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--mid);width:100%;max-width:400px;margin:.8rem 0}
+  .rb-cell{background:var(--charcoal);padding:.9rem .5rem;text-align:center}
+  .rb-val{font-family:'Bebas Neue',impact,sans-serif;font-size:1.6rem;color:var(--warm)}
+  .rb-key{font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:.1rem}
+  .result-btns{display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;margin-top:.4rem}
+
+  /* ── LEADERBOARD ── */
+  #screen-lb{gap:1.2rem;width:100%;max-width:560px;margin:0 auto}
+  .lb-table{width:100%;border-collapse:collapse}
+  .lb-table th{font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:.5rem .8rem;text-align:left;border-bottom:1px solid var(--mid)}
+  .lb-table td{padding:.65rem .8rem;font-size:.82rem;border-bottom:1px solid rgba(42,42,45,.6)}
+  .lb-rank{font-family:'Bebas Neue',impact,sans-serif;font-size:1.1rem;color:var(--muted);width:32px}
+  .lb-rank.gold{color:#ffd700}
+  .lb-rank.silver{color:#c0c0c0}
+  .lb-rank.bronze{color:#cd7f32}
+  .lb-name{color:var(--warm);font-weight:400}
+  .lb-name.me{color:var(--gold)}
+  .lb-score{font-family:'Bebas Neue',impact,sans-serif;font-size:1.1rem;color:var(--gold);text-align:right}
+  .lb-acc{font-size:.72rem;color:var(--muted);text-align:right}
+  .lb-date{font-size:.65rem;color:var(--muted);text-align:right}
+  .lb-top-btns{display:flex;gap:.6rem;margin-bottom:.5rem;justify-content:space-between;align-items:center;width:100%}
+  .lb-empty{text-align:center;padding:2rem;color:var(--muted);font-size:.85rem}
+  .my-pos-row td{background:rgba(201,168,76,.05)}
+
+  @media(max-width:500px){
+    .answers-grid{grid-template-columns:1fr}
+    .mode-grid{grid-template-columns:1fr}
+    .results-breakdown{grid-template-columns:1fr 1fr}
+    .lb-date{display:none}
+  }
+</style>
+
+<!-- ══════════ HOME ══════════ -->
+<div id="screen-home" class="screen active">
+  <div class="tag">Aero Legacy · Pilot Challenge</div>
+  <h1>Aircraft<br>Quiz</h1>
+  <p class="sub">10 questions — sounds, silhouettes, and trivia. Post your score to the global leaderboard.</p>
+
+  <div class="mode-grid">
+    <div class="mode-card selected" onclick="selectMode('mixed')" id="mode-mixed">
+      <div class="mode-icon">⚡</div>
+      <div class="mode-title">Mixed</div>
+      <div class="mode-label">All types</div>
+    </div>
+    <div class="mode-card" onclick="selectMode('sound')" id="mode-sound">
+      <div class="mode-icon">🔊</div>
+      <div class="mode-title">Sounds</div>
+      <div class="mode-label">Ear only</div>
+    </div>
+    <div class="mode-card" onclick="selectMode('silhouette')" id="mode-silhouette">
+      <div class="mode-icon">✈</div>
+      <div class="mode-title">Silhouettes</div>
+      <div class="mode-label">Visual only</div>
+    </div>
+  </div>
+
+  <div class="name-row">
+    <input class="name-input" id="pilot-name" placeholder="Enter your callsign…" maxlength="20"/>
+    <button class="btn" onclick="startQuiz()">Fly ›</button>
+  </div>
+  <button class="btn-ghost btn" style="margin-top:.5rem" onclick="showLeaderboard()">Leaderboard</button>
+</div>
+
+<!-- ══════════ QUIZ ══════════ -->
+<div id="screen-quiz" class="screen" style="max-width:620px;margin:0 auto;width:100%">
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
+  <div class="q-header">
+    <span class="q-counter" id="q-counter">Q 1 / 10</span>
+    <span class="q-score-live" id="q-score-live">0 pts</span>
+  </div>
+  <div class="timer-bar-wrap"><div class="timer-bar-fill" id="timer-fill" style="width:100%"></div></div>
+  <span class="q-type-badge badge-trivia" id="q-type-badge">Trivia</span>
+  <div class="q-text" id="q-text"></div>
+  <div id="silhouette-area" style="display:none">
+    <div class="silhouette-wrap"><svg id="silhouette-svg" class="silhouette-svg" viewBox="0 0 300 150" width="280" height="140"></svg></div>
+  </div>
+  <div id="sound-area" style="display:none">
+    <button class="sound-play-btn" id="sound-btn" onclick="toggleQuizSound()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+      <div class="wave"><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div></div>
+      <span id="sound-btn-label">Play Engine Sound</span>
+    </button>
+  </div>
+  <div class="answers-grid" id="answers-grid"></div>
+  <div class="feedback-row" id="feedback-row"></div>
+</div>
+
+<!-- ══════════ RESULTS ══════════ -->
+<div id="screen-results" class="screen">
+  <div class="tag">Mission Debrief</div>
+  <div class="score-display" id="final-score">0</div>
+  <div class="score-label">points</div>
+  <div class="rank-badge" id="rank-badge">Cadet</div>
+  <div class="results-breakdown">
+    <div class="rb-cell"><div class="rb-val" id="rb-correct">0</div><div class="rb-key">Correct</div></div>
+    <div class="rb-cell"><div class="rb-val" id="rb-acc">0%</div><div class="rb-key">Accuracy</div></div>
+    <div class="rb-cell"><div class="rb-val" id="rb-streak">0</div><div class="rb-key">Best streak</div></div>
+  </div>
+  <p class="sub" id="rank-desc"></p>
+  <div class="result-btns">
+    <button class="btn" onclick="startQuiz()">Fly Again</button>
+    <button class="btn-ghost btn" onclick="showLeaderboard()">Leaderboard</button>
+    <button class="btn-ghost btn" onclick="showScreen('screen-home')">Menu</button>
+  </div>
+</div>
+
+<!-- ══════════ LEADERBOARD ══════════ -->
+<div id="screen-lb" class="screen">
+  <div class="lb-top-btns">
+    <div>
+      <div class="tag" style="margin-bottom:0">Top 10 Pilots</div>
+      <h2 style="margin-top:.2rem">Leaderboard</h2>
+    </div>
+    <button class="btn-ghost btn" onclick="showScreen('screen-home')" style="align-self:flex-start">← Back</button>
+  </div>
+  <div id="lb-content"><div class="lb-empty">Loading…</div></div>
+</div>
+
+<script>
+const QUESTIONS_ALL = [
+  {type:'trivia',q:'Which aircraft was the first operational jet fighter used in combat?',opts:['Me 262','Gloster Meteor','He 162','P-80 Shooting Star'],ans:0,fact:'The Messerschmitt Me 262 entered Luftwaffe service in 1944, becoming the world\'s first operational jet fighter.'},
+  {type:'trivia',q:'The Supermarine Spitfire was powered by which engine?',opts:['Rolls-Royce Merlin','Bristol Hercules','Napier Sabre','Allison V-1710'],ans:0,fact:'The iconic Rolls-Royce Merlin V12 engine powered the Spitfire throughout most of its variants.'},
+  {type:'trivia',q:'What does the acronym MiG stand for in Soviet/Russian aircraft?',opts:['Mikoyan and Gurevich','Military Interceptor Grade','Mobile Interceptor Group','Mikhailov and Gorsky'],ans:0,fact:'MiG stands for Mikoyan-Gurevich, the Soviet design bureau founded by Artem Mikoyan and Mikhail Gurevich.'},
+  {type:'trivia',q:'The SR-71 Blackbird holds the record for the fastest air-breathing aircraft. What is its top speed?',opts:['Mach 3.3','Mach 2.8','Mach 4.1','Mach 2.5'],ans:0,fact:'The SR-71 reached Mach 3.3 (3,540 km/h), a record it still holds for air-breathing crewed aircraft.'},
+  {type:'trivia',q:'Which nation developed the Saab JAS 39 Gripen?',opts:['Sweden','Norway','Finland','Denmark'],ans:0,fact:'Sweden\'s SAAB developed the Gripen as a lightweight multirole fighter, first flying in 1988.'},
+  {type:'trivia',q:'The Aero L-39 Albatros was manufactured in which city?',opts:['Vodochody','Brno','Prague','Plzeň'],ans:0,fact:'Aero Vodochody, near Prague, produced over 2,900 L-39 Albatros jet trainers.'},
+  {type:'trivia',q:'What generation fighter is the F-22 Raptor?',opts:['5th generation','4th generation','4.5th generation','6th generation'],ans:0,fact:'The F-22 Raptor was the world\'s first operational 5th-generation stealth air superiority fighter.'},
+  {type:'trivia',q:'The Mitsubishi A6M Zero was primarily used by which country in WW2?',opts:['Japan','China','USA','Korea'],ans:0,fact:'The A6M Zero was the main carrier-based fighter of the Imperial Japanese Navy throughout WW2.'},
+  {type:'trivia',q:'Which aircraft dropped the atomic bombs on Japan in 1945?',opts:['B-29 Superfortress','B-17 Flying Fortress','B-24 Liberator','Lancaster Bomber'],ans:0,fact:'The Boeing B-29 Superfortress "Enola Gay" and "Bockscar" delivered the atomic bombs over Hiroshima and Nagasaki.'},
+  {type:'trivia',q:'What is the primary role of the A-10 Thunderbolt II (Warthog)?',opts:['Close air support','Air superiority','Strategic bombing','Reconnaissance'],ans:0,fact:'The A-10 was specifically designed for close air support of ground troops, built around its massive 30mm GAU-8 cannon.'},
+  {type:'trivia',q:'How many Spitfires were built during WW2?',opts:['Over 20,000','About 5,000','About 12,000','About 8,000'],ans:0,fact:'Over 20,000 Spitfires were produced — making it one of the most-produced British aircraft of the war.'},
+  {type:'trivia',q:'The F-86 Sabre faced which Soviet aircraft in the Korean War?',opts:['MiG-15','MiG-21','MiG-29','Su-27'],ans:0,fact:'The MiG-15 vs F-86 Sabre duels over "MiG Alley" in Korea were the first large-scale jet-vs-jet air battles in history.'},
+  {type:'silhouette',q:'Identify this aircraft from its silhouette:',opts:['Spitfire Mk.IX','Hurricane Mk.I','P-51 Mustang','Fw 190'],ans:0,
+   svgPath:'M 150,75 C 130,65 90,70 60,72 L 40,75 L 60,78 C 90,80 130,85 150,75 Z M 150,75 C 170,60 230,55 260,60 L 270,65 L 265,68 C 240,68 180,72 150,75 Z M 150,75 L 145,55 C 143,45 148,38 150,35 C 152,38 157,45 155,55 Z M 150,75 L 148,95 L 152,95 L 150,75 Z M 160,72 L 165,58 L 168,60 L 163,74 Z',
+   fact:'The Spitfire is identifiable by its iconic elliptical wings — a unique design that gave it superior aerodynamic efficiency.'},
+  {type:'silhouette',q:'Identify this aircraft from its silhouette:',opts:['F-14 Tomcat','F-15 Eagle','F-111','Tornado IDS'],ans:0,
+   svgPath:'M 150,75 C 120,55 70,52 50,58 L 40,62 C 60,64 100,68 130,72 L 150,75 Z M 150,75 C 180,55 230,52 250,58 L 260,62 C 240,64 200,68 170,72 L 150,75 Z M 150,75 L 145,40 C 144,30 150,22 150,22 C 150,22 156,30 155,40 Z M 148,88 L 140,105 L 144,107 L 150,92 L 156,107 L 160,105 L 152,88 Z M 125,70 L 105,62 L 108,64 L 128,72 Z M 175,70 L 195,62 L 192,64 L 172,72 Z',
+   fact:'The F-14 Tomcat\'s variable-sweep wings could fold back for carrier storage or extend for slow-speed flight — a defining feature.'},
+  {type:'silhouette',q:'Identify this aircraft from its silhouette:',opts:['B-2 Spirit','B-1 Lancer','F-117 Nighthawk','YB-49'],ans:0,
+   svgPath:'M 150,80 L 60,90 L 50,85 L 60,82 L 140,75 L 150,72 L 160,75 L 240,82 L 250,85 L 240,90 Z M 150,72 L 145,65 L 150,60 L 155,65 Z',
+   fact:'The B-2 Spirit flying wing design has no fuselage or tail — its entire shape is the wing, contributing to its stealth profile.'},
+  {type:'silhouette',q:'Identify this aircraft from its silhouette:',opts:['F-22 Raptor','Su-57','Eurofighter Typhoon','F-35 Lightning II'],ans:0,
+   svgPath:'M 150,75 C 140,60 120,50 95,48 L 80,50 L 85,55 C 105,56 130,65 148,73 L 150,75 Z M 150,75 C 160,60 180,50 205,48 L 220,50 L 215,55 C 195,56 170,65 152,73 L 150,75 Z M 150,75 L 147,45 C 146,35 150,28 150,28 C 150,28 154,35 153,45 Z M 148,88 L 142,100 L 146,102 L 150,92 L 154,102 L 158,100 L 152,88 Z M 130,68 L 115,55 L 118,57 L 133,70 Z M 170,68 L 185,55 L 182,57 L 167,70 Z',
+   fact:'The F-22 Raptor combines supercruise, supermaneuverability, and stealth — the defining 5th-generation combination.'},
+  {type:'sound',q:'Listen to the engine sound. Which aircraft does it belong to?',opts:['Spitfire Merlin','L-39 Albatros','Saab Gripen','MiG-21'],ans:0,soundSrc:'assets/SPITFIRE.mp3',
+   fact:'The Rolls-Royce Merlin\'s distinctive sound — that throaty, musical roar — is arguably the most recognizable piston engine sound in aviation history.'},
+  {type:'sound',q:'Listen to the engine sound. Which aircraft does it belong to?',opts:['Saab Gripen','F-16 Fighting Falcon','Eurofighter','L-39 Albatros'],ans:0,soundSrc:'assets/GRIPEN.mp3',
+   fact:'The Gripen\'s General Electric F404 engine produces a sharp, high-pitched jet whine characteristic of modern lightweight fighters.'},
+  {type:'sound',q:'Listen to the engine sound. Which aircraft does it belong to?',opts:['L-39 Albatros','MiG-29','Su-25 Frogfoot','Hawk T1'],ans:0,soundSrc:'assets/L39_ALBATROS.mp3',
+   fact:'The L-39\'s Ivchenko AI-25TL turbofan has a gentler, more musical tone compared to military fighters — fitting for a trainer aircraft.'},
+];
+
+const RANKS=[
+  {min:0,max:19,title:'Cadet',desc:'Keep studying the manuals, pilot.'},
+  {min:20,max:39,title:'Wingman',desc:'You\'re getting there — keep flying.'},
+  {min:40,max:59,title:'Ace',desc:'Solid performance — the skies know your name.'},
+  {min:60,max:79,title:'Squadron Leader',desc:'You know your aircraft inside out.'},
+  {min:80,max:100,title:'Wing Commander',desc:'Elite pilot. The leaderboard trembles.'},
+];
+
+let mode='mixed', pilotName='Anonymous', questions=[], qIdx=0, score=0;
+let correct=0, streak=0, bestStreak=0, timerInterval=null, timeLeft=15;
+let quizAudio=null, lastEntry=null;
+
+function selectMode(m){
+  mode=m;
+  document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('mode-'+m).classList.add('selected');
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');s.style.display='none'});
+  const el=document.getElementById(id);
+  el.style.display='flex'; el.classList.add('active');
+}
+
+function buildQuestions(){
+  let pool;
+  if(mode==='sound') pool=QUESTIONS_ALL.filter(q=>q.type==='sound');
+  else if(mode==='silhouette') pool=QUESTIONS_ALL.filter(q=>q.type==='silhouette');
+  else pool=[...QUESTIONS_ALL];
+  const shuffled=[...pool].sort(()=>Math.random()-.5);
+  // Shuffle answer options for each question
+  return shuffled.slice(0,10).map(q=>{
+    const opts=[...q.opts];
+    const correctText=opts[q.ans];
+    const shuffledOpts=opts.sort(()=>Math.random()-.5);
+    return {...q,opts:shuffledOpts,ans:shuffledOpts.indexOf(correctText)};
+  });
+}
+
+function startQuiz(){
+  stopQuizAudio();
+  questions=buildQuestions();
+  qIdx=0; score=0; correct=0; streak=0; bestStreak=0;
+  pilotName=(document.getElementById('pilot-name')||{}).value||'Anonymous';
+  if(!pilotName.trim()) pilotName='Anonymous';
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function renderQuestion(){
+  stopQuizAudio();
+  const q=questions[qIdx];
+  document.getElementById('progress-fill').style.width=((qIdx/10)*100)+'%';
+  document.getElementById('q-counter').textContent='Q '+(qIdx+1)+' / 10';
+  document.getElementById('q-score-live').textContent=score+' pts';
+  document.getElementById('q-text').textContent=q.q;
+  document.getElementById('feedback-row').innerHTML='';
+
+  const badge=document.getElementById('q-type-badge');
+  badge.textContent=q.type==='sound'?'Sound ID':q.type==='silhouette'?'Silhouette':'Trivia';
+  badge.className='q-type-badge '+(q.type==='sound'?'badge-sound':q.type==='silhouette'?'badge-silhouette':'badge-trivia');
+
+  document.getElementById('silhouette-area').style.display=q.type==='silhouette'?'block':'none';
+  document.getElementById('sound-area').style.display=q.type==='sound'?'block':'none';
+
+  if(q.type==='silhouette') renderSilhouette(q);
+  if(q.type==='sound'){
+    document.getElementById('sound-btn').classList.remove('playing');
+    document.getElementById('sound-btn-label').textContent='Play Engine Sound';
+  }
+
+  const grid=document.getElementById('answers-grid');
+  grid.innerHTML='';
+  const letters=['A','B','C','D'];
+  q.opts.forEach((opt,i)=>{
+    const btn=document.createElement('button');
+    btn.className='ans-btn';
+    btn.innerHTML='<span class="ans-letter">'+letters[i]+'</span>'+opt;
+    btn.onclick=()=>selectAnswer(i);
+    grid.appendChild(btn);
+  });
+
+  startTimer();
+}
+
+function renderSilhouette(q){
+  const svg=document.getElementById('silhouette-svg');
+  svg.className='silhouette-svg';
+  svg.innerHTML='<path d="'+q.svgPath+'" fill="#e8d5b0"/>';
+}
+
+function startTimer(){
+  clearInterval(timerInterval);
+  timeLeft=15;
+  const fill=document.getElementById('timer-fill');
+  fill.style.width='100%';
+  fill.style.background='var(--gold)';
+  timerInterval=setInterval(()=>{
+    timeLeft-=.05;
+    const pct=Math.max(0,(timeLeft/15)*100);
+    fill.style.width=pct+'%';
+    if(timeLeft<=5) fill.style.background='var(--ww2)';
+    if(timeLeft<=0){clearInterval(timerInterval);handleTimeout();}
+  },50);
+}
+
+function handleTimeout(){
+  disableAnswers();
+  const q=questions[qIdx];
+  streak=0;
+  const btns=document.querySelectorAll('.ans-btn');
+  btns[q.ans].classList.add('correct');
+  document.getElementById('feedback-row').innerHTML='<span class="feedback-wrong">Time\'s up! — '+q.fact+'</span>';
+  setTimeout(nextQuestion,2200);
+}
+
+function selectAnswer(idx){
+  clearInterval(timerInterval);
+  disableAnswers();
+  const q=questions[qIdx];
+  const btns=document.querySelectorAll('.ans-btn');
+  const isCorrect=idx===q.ans;
+  btns[idx].classList.add(isCorrect?'correct':'wrong');
+  if(!isCorrect) btns[q.ans].classList.add('correct');
+
+  let pts=0;
+  if(isCorrect){
+    correct++;streak++;if(streak>bestStreak)bestStreak=streak;
+    pts=100+Math.round(timeLeft*10)+(streak>1?(streak-1)*25:0);
+    score+=pts;
+    document.getElementById('feedback-row').innerHTML='<span class="feedback-correct">✓ Correct!</span><span class="pts-badge">+'+pts+' pts</span>';
+    setTimeout(()=>document.querySelector('.pts-badge').classList.add('show'),50);
+  } else {
+    streak=0;
+    document.getElementById('feedback-row').innerHTML='<span class="feedback-wrong">✗ Wrong — '+q.fact+'</span>';
+  }
+
+  if(q.type==='silhouette'){
+    document.getElementById('silhouette-svg').classList.add('revealed');
+  }
+
+  document.getElementById('q-score-live').textContent=score+' pts';
+  setTimeout(nextQuestion,isCorrect?1600:2400);
+}
+
+function disableAnswers(){
+  document.querySelectorAll('.ans-btn').forEach(b=>{b.classList.add('disabled');b.onclick=null});
+}
+
+function nextQuestion(){
+  stopQuizAudio();
+  qIdx++;
+  if(qIdx>=10) finishQuiz();
+  else renderQuestion();
+}
+
+function finishQuiz(){
+  document.getElementById('progress-fill').style.width='100%';
+  const acc=Math.round((correct/10)*100);
+  const rank=RANKS.find(r=>acc>=r.min&&acc<=r.max)||RANKS[0];
+  document.getElementById('final-score').textContent=score;
+  document.getElementById('rank-badge').textContent=rank.title;
+  document.getElementById('rank-desc').textContent=rank.desc;
+  document.getElementById('rb-correct').textContent=correct+'/10';
+  document.getElementById('rb-acc').textContent=acc+'%';
+  document.getElementById('rb-streak').textContent=bestStreak;
+  lastEntry={name:pilotName.trim()||'Anonymous',score,correct,acc,streak:bestStreak,date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'})};
+  saveScore(lastEntry);
+  showScreen('screen-results');
+}
+
+async function saveScore(entry){
+  try{
+    const existing=await loadScores();
+    existing.push(entry);
+    existing.sort((a,b)=>b.score-a.score);
+    const top=existing.slice(0,50);
+    await window.storage.set('aero_leaderboard_v1',JSON.stringify(top),true);
+  }catch(e){}
+}
+
+async function loadScores(){
+  try{
+    const r=await window.storage.get('aero_leaderboard_v1',true);
+    return r?JSON.parse(r.value):[];
+  }catch(e){return[];}
+}
+
+async function showLeaderboard(){
+  showScreen('screen-lb');
+  document.getElementById('lb-content').innerHTML='<div class="lb-empty">Loading scores…</div>';
+  const scores=await loadScores();
+  renderLeaderboard(scores);
+}
+
+function renderLeaderboard(scores){
+  const top10=scores.slice(0,10);
+  if(!top10.length){
+    document.getElementById('lb-content').innerHTML='<div class="lb-empty">No scores yet — be the first to fly!</div>';
+    return;
+  }
+  const rankClass=['gold','silver','bronze'];
+  let myRow='';
+  if(lastEntry){
+    const myPos=scores.findIndex(s=>s.name===lastEntry.name&&s.score===lastEntry.score&&s.acc===lastEntry.acc);
+    if(myPos>=10){
+      myRow=`<tr class="my-pos-row"><td class="lb-rank">${myPos+1}</td><td class="lb-name me">${esc(lastEntry.name)} ← you</td><td class="lb-score">${lastEntry.score}</td><td class="lb-acc">${lastEntry.acc}%</td><td class="lb-date">${lastEntry.date}</td></tr>`;
+    }
+  }
+  const rows=top10.map((s,i)=>{
+    const isMe=lastEntry&&s.name===lastEntry.name&&s.score===lastEntry.score&&s.acc===lastEntry.acc;
+    const rc=i<3?rankClass[i]:'';
+    return`<tr${isMe?' class="my-pos-row"':''}><td class="lb-rank ${rc}">${i+1}</td><td class="lb-name${isMe?' me':''}">${esc(s.name)}${isMe?' ← you':''}</td><td class="lb-score">${s.score}</td><td class="lb-acc">${s.acc}%</td><td class="lb-date">${s.date||''}</td></tr>`;
+  }).join('');
+  document.getElementById('lb-content').innerHTML=`
+    <table class="lb-table">
+      <thead><tr><th>#</th><th>Pilot</th><th style="text-align:right">Score</th><th style="text-align:right">Accuracy</th><th style="text-align:right">Date</th></tr></thead>
+      <tbody>${rows}${myRow}</tbody>
+    </table>`;
+}
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function toggleQuizSound(){
+  const q=questions[qIdx];
+  if(!q||q.type!=='sound') return;
+  const btn=document.getElementById('sound-btn');
+  if(quizAudio&&!quizAudio.paused){
+    quizAudio.pause();quizAudio.currentTime=0;
+    btn.classList.remove('playing');
+    document.getElementById('sound-btn-label').textContent='Play Engine Sound';
+  } else {
+    stopQuizAudio();
+    quizAudio=new Audio(q.soundSrc);
+    quizAudio.loop=true;quizAudio.volume=.8;
+    quizAudio.play().catch(()=>{});
+    btn.classList.add('playing');
+    document.getElementById('sound-btn-label').textContent='Stop';
+  }
+}
+
+function stopQuizAudio(){
+  if(quizAudio){quizAudio.pause();quizAudio.currentTime=0;quizAudio=null;}
+  const btn=document.getElementById('sound-btn');
+  if(btn){btn.classList.remove('playing');document.getElementById('sound-btn-label').textContent='Play Engine Sound';}
+}
+</script>

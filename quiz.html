@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en" id="html-root">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Aircraft Quiz — Aero Legacy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;1,9..40,300&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --black:    #0a0a0a;
+      --charcoal: #111111;
+      --steel:    #1c1c1e;
+      --mid:      #2a2a2d;
+      --warm:     #e8d5b0;
+      --gold:     #c9a84c;
+      --white:    #f5f0e8;
+      --muted:    #7a7a72;
+      --ww2:      #c0392b;
+      --cold:     #2471a3;
+      --present:  #1e8449;
+    }
+
+    * { cursor: url("assets/cursors/cursor_default.png"), auto; }
+    *:active { cursor: url("assets/cursors/cursor_boom.png"), auto; }
+
+    html {
+      scroll-behavior: smooth;
+      scrollbar-width: thin;
+      scrollbar-color: var(--gold) var(--charcoal);
+    }
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: var(--charcoal); }
+    ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #aa9a6f; }
+
+    body {
+      background: var(--black);
+      color: var(--warm);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== LANG BAR (Navigation) ===== */
+    .lang-bar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      display: flex; align-items: center; gap: 0;
+      padding: 0 3rem; height: 42px;
+      background: rgba(10,10,10,0.92);
+      border-bottom: 1px solid rgba(201,168,76,0.12);
+    }
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem;
+      letter-spacing: 0.12em; color: var(--warm); text-decoration: none; margin-right: auto;
+    }
+    .nav-back {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--muted); text-decoration: none; transition: color 0.2s; margin-right: 2rem;
+    }
+    .nav-back::before { content: '←'; }
+    .nav-back:hover { color: var(--warm); }
+    
+    .lang-sep { color: var(--mid); font-size: 0.8rem; margin: 0 0.3rem; }
+    .lang-btn {
+      background: none; border: 1px solid transparent; color: var(--muted);
+      font-family: 'DM Sans', sans-serif; font-size: 0.7rem;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      padding: 0.22rem 0.65rem; cursor: pointer;
+      transition: color 0.2s, border-color 0.2s; border-radius: 2px;
+    }
+    .lang-btn.active { color: var(--gold); border-color: rgba(201,168,76,0.4); }
+
+    /* ===== BACKGROUND HERO ===== */
+    .hero-bg {
+      position: fixed; inset: 0; z-index: -2;
+      background: radial-gradient(circle at 50% 40%, #1c1c1e 0%, #0a0a0a 70%);
+    }
+    .hero-grid {
+      position: fixed; inset: 0; z-index: -1;
+      background-image:
+        linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 20%, transparent 75%);
+      -webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 20%, transparent 75%);
+    }
+
+    /* ===== MAIN CONTAINER ===== */
+    .main-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 1.5rem 4rem 1.5rem;
+    }
+
+    .quiz-card {
+      background: var(--charcoal);
+      border: 1px solid var(--mid);
+      width: 100%;
+      max-width: 640px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+    
+    .quiz-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--ww2), var(--gold), var(--cold));
+      opacity: 0.7;
+    }
+
+    .screen {
+      display: none; flex-direction: column; align-items: center;
+      min-height: 520px; padding: 3.5rem 3rem;
+      animation: fadeIn 0.4s ease forwards;
+    }
+    .screen.active { display: flex; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== TYPOGRAPHY ===== */
+    h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(3rem, 6vw, 4.5rem); letter-spacing: 0.04em; color: var(--warm); line-height: 0.9; margin-bottom: 0.5rem; }
+    h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; letter-spacing: 0.06em; color: var(--warm); line-height: 1; }
+    
+    .tag {
+      font-size: 0.66rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold);
+      border-left: 2px solid var(--gold); padding-left: 0.7rem; margin-bottom: 1rem;
+    }
+    .sub { font-size: 0.9rem; color: var(--muted); line-height: 1.75; max-width: 460px; text-align: center; margin-bottom: 2rem; }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem;
+      padding: 0.8rem 2.2rem; background: var(--gold); color: var(--black); border: none;
+      font-family: 'DM Sans', sans-serif; font-size: 0.75rem; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer;
+      transition: background 0.2s, transform 0.15s; border-radius: 2px;
+    }
+    .btn:hover { background: #dfc168; transform: translateY(-1px); }
+    
+    .btn-ghost {
+      background: transparent; border: 1px solid var(--mid); color: var(--warm);
+      font-weight: 300;
+    }
+    .btn-ghost:hover { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.05); }
+
+    /* ===== HOME SCREEN ===== */
+    #screen-home { justify-content: center; text-align: center; }
+    
+    .mode-grid { display: flex; gap: 0; border: 1px solid var(--mid); width: 100%; max-width: 520px; margin-bottom: 2rem; }
+    .mode-card {
+      flex: 1; padding: 1.2rem 0.5rem; text-align: center; cursor: pointer;
+      border-right: 1px solid var(--mid); background: transparent; transition: background 0.2s;
+    }
+    .mode-card:last-child { border-right: none; }
+    .mode-card:hover { background: var(--steel); }
+    .mode-card.selected { background: rgba(201,168,76,0.08); border-bottom: 2px solid var(--gold); margin-bottom: -2px; }
+    
+    .mode-icon { font-size: 1.4rem; margin-bottom: 0.4rem; opacity: 0.8; }
+    .mode-label { font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+    .mode-title { font-size: 0.95rem; color: var(--warm); font-weight: 400; margin-top: 0.2rem; }
+
+    .name-row { display: flex; gap: 0.5rem; width: 100%; max-width: 420px; margin-bottom: 1rem; }
+    .name-input {
+      flex: 1; background: var(--steel); border: 1px solid var(--mid); color: var(--warm);
+      padding: 0.8rem 1.2rem; font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+      outline: none; transition: border-color 0.2s; border-radius: 2px;
+    }
+    .name-input:focus { border-color: var(--gold); }
+    .name-input::placeholder { color: var(--muted); }
+
+    /* ===== QUIZ SCREEN ===== */
+    #screen-quiz { padding: 0; align-items: stretch; justify-content: flex-start; }
+    
+    .progress-bar-wrap { width: 100%; height: 2px; background: var(--steel); position: relative; }
+    .progress-bar-fill { height: 100%; background: var(--gold); transition: width 0.4s ease; width: 0%; }
+    
+    .quiz-inner { padding: 2.5rem 3rem 3.5rem; display: flex; flex-direction: column; flex: 1; }
+    
+    .q-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.5rem; }
+    .q-counter { font-size: 0.65rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); }
+    .q-score-live { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: var(--gold); line-height: 0.8; }
+    
+    .q-type-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem; width: fit-content;
+      font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase;
+      margin-bottom: 1rem; color: var(--gold);
+    }
+    .q-type-badge::before { content: ''; display: block; width: 12px; height: 1px; }
+    .badge-sound { color: var(--cold); } .badge-sound::before { background: var(--cold); }
+    .badge-silhouette { color: var(--ww2); } .badge-silhouette::before { background: var(--ww2); }
+    .badge-trivia { color: var(--gold); } .badge-trivia::before { background: var(--gold); }
+    
+    .q-text { font-size: 1.2rem; color: var(--warm); line-height: 1.6; margin-bottom: 2rem; min-height: 56px; }
+
+    /* Silhouette & Sound Areas */
+    .silhouette-wrap {
+      width: 100%; height: 200px; display: flex; align-items: center; justify-content: center;
+      background: var(--steel); border: 1px solid var(--mid); margin-bottom: 2rem;
+      position: relative; overflow: hidden;
+    }
+    .silhouette-svg { filter: brightness(0) opacity(0.8); transition: filter 0.6s ease; }
+    .silhouette-svg.revealed { filter: brightness(1) opacity(1); }
+
+    .sound-play-btn {
+      display: flex; align-items: center; justify-content: center; gap: 0.65rem;
+      width: 100%; padding: 0 1.5rem; height: 54px;
+      border: 1px solid var(--mid); background: var(--steel);
+      color: var(--muted); font-family: 'DM Sans', sans-serif;
+      font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase;
+      transition: border-color 0.25s, color 0.25s, background 0.25s;
+      margin-bottom: 2rem; cursor: pointer;
+    }
+    .sound-play-btn:hover { border-color: var(--gold); color: var(--warm); }
+    .sound-play-btn.playing { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.06); }
+    
+    .sound-icon { width: 16px; height: 16px; flex-shrink: 0; transition: opacity 0.2s; }
+    .sound-play-btn.playing .sound-icon { opacity: 0.4; }
+
+    .wave { display: flex; align-items: center; gap: 2.5px; height: 16px; opacity: 0; transition: opacity 0.2s; flex-shrink: 0; }
+    .sound-play-btn.playing .wave { opacity: 1; }
+    .wb { width: 2px; border-radius: 2px; background: var(--gold); animation: wavebar 0.85s ease-in-out infinite; }
+    .wb:nth-child(1) { height: 4px; animation-delay: 0s; }
+    .wb:nth-child(2) { height: 11px; animation-delay: 0.13s; }
+    .wb:nth-child(3) { height: 16px; animation-delay: 0.26s; }
+    .wb:nth-child(4) { height: 9px; animation-delay: 0.39s; }
+    .wb:nth-child(5) { height: 5px; animation-delay: 0.52s; }
+    @keyframes wavebar { 0%, 100% { transform: scaleY(0.35); opacity: 0.5; } 50% { transform: scaleY(1); opacity: 1; } }
+
+    /* Answers Grid */
+    .timer-bar-wrap { width: 100%; height: 2px; background: var(--steel); margin-bottom: 0; }
+    .timer-bar-fill { height: 2px; background: var(--gold); transition: width 0.05s linear; }
+
+    .answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--mid); border: 1px solid var(--mid); }
+    .ans-btn {
+      background: var(--charcoal); border: none; color: var(--warm);
+      font-family: 'DM Sans', sans-serif; font-size: 0.9rem; padding: 1.2rem;
+      text-align: left; cursor: pointer; transition: background 0.2s, color 0.2s;
+      display: flex; align-items: center;
+    }
+    .ans-btn:hover:not(.disabled) { background: var(--steel); color: #fff; }
+    .ans-btn.correct { background: rgba(30,132,73,0.15); color: #6fcf97; box-shadow: inset 0 0 0 1px var(--present); z-index: 1; }
+    .ans-btn.wrong { background: rgba(192,57,43,0.12); color: #e07070; box-shadow: inset 0 0 0 1px var(--ww2); z-index: 1; }
+    .ans-btn.disabled { cursor: default; }
+    
+    .ans-letter {
+      font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--gold);
+      margin-right: 0.8rem; opacity: 0.7; width: 16px; text-align: center; line-height: 1;
+    }
+
+    .feedback-row { height: 34px; display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; margin-top: 1.5rem; }
+    .feedback-msg { display: flex; align-items: center; gap: 0.5rem; }
+    .feedback-correct { color: #6fcf97; }
+    .feedback-wrong { color: #e07070; }
+    .pts-badge { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--gold); opacity: 0; transition: opacity 0.3s; transform: translateY(5px); }
+    .pts-badge.show { opacity: 1; transform: translateY(0); }
+
+    /* ===== RESULTS SCREEN ===== */
+    #screen-results { text-align: center; justify-content: center; }
+    .score-display { font-family: 'Bebas Neue', sans-serif; font-size: 7rem; color: var(--gold); line-height: 0.85; margin: 1rem 0 0; }
+    .score-label { font-size: 0.7rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.5rem; }
+    
+    .rank-badge {
+      display: inline-block; padding: 0.4rem 1.5rem; border: 1px solid var(--gold); background: rgba(201,168,76,0.05);
+      font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 1.5rem;
+    }
+    
+    .results-breakdown { display: flex; gap: 0; border: 1px solid var(--mid); width: fit-content; margin: 0 auto 1.5rem; }
+    .rb-cell { padding: 1rem 1.5rem; border-right: 1px solid var(--mid); text-align: center; background: var(--charcoal); }
+    .rb-cell:last-child { border-right: none; }
+    .rb-val { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: var(--warm); letter-spacing: 0.04em; line-height: 1; }
+    .rb-key { font-size: 0.56rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-top: 0.3rem; }
+
+    .result-btns { display: flex; gap: 0.8rem; flex-wrap: wrap; justify-content: center; margin-top: 1rem; }
+
+    /* ===== LEADERBOARD SCREEN ===== */
+    #screen-lb { justify-content: flex-start; padding: 3.5rem 2rem; }
+    .lb-top-btns { display: flex; justify-content: space-between; align-items: flex-end; width: 100%; margin-bottom: 2rem; border-bottom: 1px solid var(--mid); padding-bottom: 1.5rem; }
+    
+    .lb-table { width: 100%; border-collapse: collapse; }
+    .lb-table th { font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--mid); }
+    .lb-table td { padding: 1rem 0.8rem; font-size: 0.9rem; border-bottom: 1px solid rgba(42,42,45,0.4); }
+    
+    .lb-rank { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; color: var(--muted); width: 40px; }
+    .lb-rank.gold { color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.3); }
+    .lb-rank.silver { color: #c0c0c0; }
+    .lb-rank.bronze { color: #cd7f32; }
+    
+    .lb-name { color: var(--warm); }
+    .lb-name.me { color: var(--gold); font-weight: 400; }
+    .lb-score { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; color: var(--gold); text-align: right; letter-spacing: 0.05em; }
+    .lb-acc { font-size: 0.8rem; color: var(--muted); text-align: right; }
+    .lb-date { font-size: 0.75rem; color: var(--muted); text-align: right; }
+    
+    .lb-empty { text-align: center; padding: 3rem; color: var(--muted); font-size: 0.9rem; letter-spacing: 0.05em; }
+    .my-pos-row td { background: rgba(201,168,76,0.06); }
+
+    /* ===== FOOTER ===== */
+    .page-footer {
+      background: var(--charcoal); border-top: 1px solid var(--mid); padding: 2rem 3rem;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+      position: relative; z-index: 10; margin-top: auto;
+    }
+    .footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 0.1em; color: var(--warm); text-decoration: none; }
+    .footer-copy { font-size: 0.7rem; color: var(--muted); }
+
+    /* Responsive Adjustments */
+    @media(max-width: 600px) {
+      .lang-bar { padding: 0 1.5rem; }
+      .main-wrapper { padding: 60px 1rem 2rem; }
+      .screen { padding: 2.5rem 1.5rem; }
+      .quiz-inner { padding: 2rem 1.5rem; }
+      .answers-grid { grid-template-columns: 1fr; }
+      .mode-grid { flex-direction: column; }
+      .mode-card { border-right: none; border-bottom: 1px solid var(--mid); }
+      .mode-card.selected { border-bottom: 2px solid var(--gold); margin-bottom: 0; }
+      .results-breakdown { flex-direction: column; width: 100%; border-right: 1px solid var(--mid); border-bottom: none; }
+      .rb-cell { border-right: none; border-bottom: 1px solid var(--mid); }
+      .lb-date { display: none; }
+      .page-footer { padding: 1.5rem; flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="lang-bar">
+    <a href="index.html" class="nav-logo">Aero Legacy</a>
+    <a href="index.html" class="nav-back" data-en="Back to Museum" data-cs="Zpět do muzea">Back to Museum</a>
+    <button class="lang-btn active" id="btn-en" onclick="switchLang('en')">EN</button>
+    <span class="lang-sep">|</span>
+    <button class="lang-btn" id="btn-cs" onclick="switchLang('cs')">CS</button>
+  </div>
+
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+
+  <main class="main-wrapper">
+    <div class="quiz-card">
+      
+      <div id="screen-home" class="screen active">
+        <div class="tag" data-en="Aero Legacy · Pilot Challenge" data-cs="Aero Legacy · Výzva pro piloty">Aero Legacy · Pilot Challenge</div>
+        <h1 data-en="Aircraft Quiz" data-cs="Kvíz o letadlech">Aircraft Quiz</h1>
+        <p class="sub" data-en="10 questions spanning sounds, silhouettes, and historical trivia. Test your knowledge and post your score to the global leaderboard." data-cs="10 otázek zahrnujících zvuky, siluety a historická fakta. Otestujte své znalosti a zapište se do globálního žebříčku.">10 questions spanning sounds, silhouettes, and historical trivia. Test your knowledge and post your score to the global leaderboard.</p>
+
+        <div class="mode-grid">
+          <div class="mode-card selected" onclick="selectMode('mixed')" id="mode-mixed">
+            <div class="mode-icon">⚡</div>
+            <div class="mode-title" data-en="Mixed" data-cs="Smíšené">Mixed</div>
+            <div class="mode-label" data-en="All types" data-cs="Všechny typy">All types</div>
+          </div>
+          <div class="mode-card" onclick="selectMode('sound')" id="mode-sound">
+            <div class="mode-icon">🔊</div>
+            <div class="mode-title" data-en="Sounds" data-cs="Zvuky">Sounds</div>
+            <div class="mode-label" data-en="Ear only" data-cs="Pouze po sluchu">Ear only</div>
+          </div>
+          <div class="mode-card" onclick="selectMode('silhouette')" id="mode-silhouette">
+            <div class="mode-icon">✈</div>
+            <div class="mode-title" data-en="Silhouettes" data-cs="Siluety">Silhouettes</div>
+            <div class="mode-label" data-en="Visual only" data-cs="Pouze vizuálně">Visual only</div>
+          </div>
+        </div>
+
+        <div class="name-row">
+          <input class="name-input" id="pilot-name" placeholder="Enter your callsign…" data-en-placeholder="Enter your callsign…" data-cs-placeholder="Zadejte svůj volací znak…" maxlength="20"/>
+          <button class="btn" onclick="startQuiz()" data-en="Fly ›" data-cs="Letět ›">Fly ›</button>
+        </div>
+        <button class="btn btn-ghost" style="margin-top:0.5rem" onclick="showLeaderboard()" data-en="View Leaderboard" data-cs="Zobrazit žebříček">View Leaderboard</button>
+      </div>
+
+      <div id="screen-quiz" class="screen">
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
+        
+        <div class="quiz-inner">
+          <div class="q-header">
+            <span class="q-counter" id="q-counter">Q 1 / 10</span>
+            <span class="q-score-live" id="q-score-live">0 pts</span>
+          </div>
+          
+          <span class="q-type-badge badge-trivia" id="q-type-badge">Trivia</span>
+          <div class="q-text" id="q-text"></div>
+          
+          <div id="silhouette-area" style="display:none">
+            <div class="silhouette-wrap"><svg id="silhouette-svg" class="silhouette-svg" viewBox="0 0 300 150" width="280" height="140"></svg></div>
+          </div>
+          
+          <div id="sound-area" style="display:none">
+            <button class="sound-play-btn" id="sound-btn" onclick="toggleQuizSound()">
+              <svg class="sound-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+              </svg>
+              <div class="wave"><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div></div>
+              <span id="sound-btn-label" data-en="Play Engine Sound" data-cs="Přehrát zvuk motoru">Play Engine Sound</span>
+            </button>
+          </div>
+          
+          <div class="timer-bar-wrap"><div class="timer-bar-fill" id="timer-fill" style="width:100%"></div></div>
+          <div class="answers-grid" id="answers-grid"></div>
+          
+          <div class="feedback-row" id="feedback-row"></div>
+        </div>
+      </div>
+
+      <div id="screen-results" class="screen">
+        <div class="tag" data-en="Mission Debrief" data-cs="Shrnutí mise">Mission Debrief</div>
+        <div class="score-display" id="final-score">0</div>
+        <div class="score-label" data-en="Total Points" data-cs="Celkové skóre">Total Points</div>
+        <div class="rank-badge" id="rank-badge">Cadet</div>
+        
+        <div class="results-breakdown">
+          <div class="rb-cell"><div class="rb-val" id="rb-correct">0</div><div class="rb-key" data-en="Correct" data-cs="Správně">Correct</div></div>
+          <div class="rb-cell"><div class="rb-val" id="rb-acc">0%</div><div class="rb-key" data-en="Accuracy" data-cs="Přesnost">Accuracy</div></div>
+          <div class="rb-cell"><div class="rb-val" id="rb-streak">0</div><div class="rb-key" data-en="Best streak" data-cs="Nejlepší série">Best streak</div></div>
+        </div>
+        
+        <p class="sub" id="rank-desc"></p>
+        
+        <div class="result-btns">
+          <button class="btn" onclick="startQuiz()" data-en="Fly Again" data-cs="Letět znovu">Fly Again</button>
+          <button class="btn btn-ghost" onclick="showLeaderboard()" data-en="Leaderboard" data-cs="Žebříček">Leaderboard</button>
+          <button class="btn btn-ghost" onclick="showScreen('screen-home')" data-en="Menu" data-cs="Menu">Menu</button>
+        </div>
+      </div>
+
+      <div id="screen-lb" class="screen">
+        <div class="lb-top-btns">
+          <div>
+            <div class="tag" style="margin-bottom:0" data-en="Top 10 Pilots" data-cs="Top 10 Pilotů">Top 10 Pilots</div>
+            <h2 style="margin-top:0.4rem" data-en="Leaderboard" data-cs="Žebříček">Leaderboard</h2>
+          </div>
+          <button class="btn btn-ghost" onclick="showScreen('screen-home')" style="padding: 0.6rem 1.2rem; font-size: 0.65rem;" data-en="Back to Menu" data-cs="Zpět do menu">Back to Menu</button>
+        </div>
+        <div id="lb-content" style="width: 100%;"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="page-footer">
+    <a href="index.html" class="footer-logo">Aero Legacy</a>
+    <span class="footer-copy" data-en="© 2026 Aero Legacy — Virtual Museum" data-cs="© 2026 Aero Legacy — Virtuální muzeum">© 2026 Aero Legacy — Virtual Museum</span>
+  </footer>
+
+  <script>
+    /* ===== DATA (BILINGUAL) ===== */
+    const QUESTIONS_ALL = [
+      {
+        type: 'trivia',
+        q: { en: 'Which aircraft was the first operational jet fighter used in combat?', cs: 'Který letoun byl první operační proudový stíhač použitý v boji?' },
+        opts: { en: ['Me 262','Gloster Meteor','He 162','P-80 Shooting Star'], cs: ['Me 262','Gloster Meteor','He 162','P-80 Shooting Star'] },
+        ans: 0, 
+        fact: { en: 'The Messerschmitt Me 262 entered Luftwaffe service in 1944, becoming the world\'s first operational jet fighter.', cs: 'Messerschmitt Me 262 vstoupil do služby u Luftwaffe v roce 1944 a stal se prvním operačním proudovým stíhačem na světě.' }
+      },
+      {
+        type: 'trivia',
+        q: { en: 'The Supermarine Spitfire was powered by which engine?', cs: 'Který motor poháněl letoun Supermarine Spitfire?' },
+        opts: { en: ['Rolls-Royce Merlin','Bristol Hercules','Napier Sabre','Allison V-1710'], cs: ['Rolls-Royce Merlin','Bristol Hercules','Napier Sabre','Allison V-1710'] },
+        ans: 0,
+        fact: { en: 'The iconic Rolls-Royce Merlin V12 engine powered the Spitfire throughout most of its variants.', cs: 'Ikonický motor Rolls-Royce Merlin V12 poháněl většinu variant Spitfiru.' }
+      },
+      {
+        type: 'trivia',
+        q: { en: 'What does the acronym MiG stand for in Soviet/Russian aircraft?', cs: 'Co znamená zkratka MiG u sovětských a ruských letadel?' },
+        opts: { en: ['Mikoyan and Gurevich','Military Interceptor Grade','Mobile Interceptor Group','Mikhailov and Gorsky'], cs: ['Mikojan a Gurevič','Military Interceptor Grade','Mobile Interceptor Group','Michajlov a Gorsky'] },
+        ans: 0,
+        fact: { en: 'MiG stands for Mikoyan-Gurevich, the Soviet design bureau founded by Artem Mikoyan and Mikhail Gurevich.', cs: 'MiG znamená Mikojan-Gurevič, což byla sovětská konstrukční kancelář založená Arťomem Mikojanem a Michailem Gurevičem.' }
+      },
+      {
+        type: 'trivia',
+        q: { en: 'The SR-71 Blackbird holds the record for the fastest air-breathing aircraft. What is its top speed?', cs: 'SR-71 Blackbird drží rekord jako nejrychlejší letoun s proudovým motorem. Jaká je jeho maximální rychlost?' },
+        opts: { en: ['Mach 3.3','Mach 2.8','Mach 4.1','Mach 2.5'], cs: ['Mach 3.3','Mach 2.8','Mach 4.1','Mach 2.5'] },
+        ans: 0,
+        fact: { en: 'The SR-71 reached Mach 3.3 (3,540 km/h), a record it still holds for air-breathing crewed aircraft.', cs: 'SR-71 dosáhl rychlosti Mach 3,3 (3 540 km/h), což je dodnes platný rekord pro pilotovaná letadla s proudovým motorem.' }
+      },
+      {
+        type: 'trivia',
+        q: { en: 'Which nation developed the Saab JAS 39 Gripen?', cs: 'Který stát vyvinul letoun Saab JAS 39 Gripen?' },
+        opts: { en: ['Sweden','Norway','Finland','Denmark'], cs: ['Švédsko','Norsko','Finsko','Dánsko'] },
+        ans: 0,
+        fact: { en: 'Sweden\'s SAAB developed the Gripen as a lightweight multirole fighter, first flying in 1988.', cs: 'Švédská společnost SAAB vyvinula Gripen jako lehký víceúčelový stíhací letoun, který poprvé vzlétl v roce 1988.' }
+      },
+      {
+        type: 'trivia',
+        q: { en: 'The Aero L-39 Albatros was manufactured in which city?', cs: 'Ve kterém městě se vyráběl letoun Aero L-39 Albatros?' },
+        opts: { en: ['Vodochody','Brno','Prague','Plzeň'], cs: ['Vodochody','Brno','Praha','Plzeň'] },
+        ans: 0,
+        fact: { en: 'Aero Vodochody, near Prague, produced over 2,900 L-39 Albatros jet trainers.', cs: 'Společnost Aero Vodochody poblíž Prahy vyrobila přes 2 900 cvičných letounů L-39 Albatros.' }
+      },
+      {
+        type: 'trivia',
+        q: { en: 'What generation fighter is the F-22 Raptor?', cs: 'Do jaké generace stíhaček patří F-22 Raptor?' },
+        opts: { en: ['5th generation','4th generation','4.5th generation','6th generation'], cs: ['5. generace','4. generace','4.5 generace','6. generace'] },
+        ans: 0,
+        fact: { en: 'The F-22 Raptor was the world\'s first operational 5th-generation stealth air superiority fighter.', cs: 'F-22 Raptor byl první operačně nasazenou stealth stíhačkou 5. generace na světě.' }
+      },
+      {
+        type: 'trivia',
+        q: { en: 'The Mitsubishi A6M Zero was primarily used by which country in WW2?', cs: 'Která země primárně používala Mitsubishi A6M Zero během 2. světové války?' },
+        opts: { en: ['Japan','China','USA','Korea'], cs: ['Japonsko','Čína','USA','Korea'] },
+        ans: 0,
+        fact: { en: 'The A6M Zero was the main carrier-based fighter of the Imperial Japanese Navy throughout WW2.', cs: 'A6M Zero byl hlavním palubním stíhačem Japonského císařského námořnictva během 2. sv. války.' }
+      },
+      {
+        type: 'trivia',
+        q: { en: 'Which aircraft dropped the atomic bombs on Japan in 1945?', cs: 'Který letoun shodil atomové bomby na Japonsko v roce 1945?' },
+        opts: { en: ['B-29 Superfortress','B-17 Flying Fortress','B-24 Liberator','Lancaster Bomber'], cs: ['B-29 Superfortress','B-17 Flying Fortress','B-24 Liberator','Lancaster Bomber'] },
+        ans: 0,
+        fact: { en: 'The Boeing B-29 Superfortress "Enola Gay" and "Bockscar" delivered the atomic bombs over Hiroshima and Nagasaki.', cs: 'Letouny Boeing B-29 Superfortress "Enola Gay" a "Bockscar" svrhly atomové bomby na Hirošimu a Nagasaki.' }
+      },
+      {
+        type: 'trivia',
+        q: { en: 'What is the primary role of the A-10 Thunderbolt II (Warthog)?', cs: 'Jaká je hlavní role letounu A-10 Thunderbolt II (Warthog)?' },
+        opts: { en: ['Close air support','Air superiority','Strategic bombing','Reconnaissance'], cs: ['Blízká letecká podpora','Vzdušná nadvláda','Strategické bombardování','Průzkum'] },
+        ans: 0,
+        fact: { en: 'The A-10 was specifically designed for close air support of ground troops, built around its massive 30mm GAU-8 cannon.', cs: 'A-10 byl navržen speciálně pro blízkou leteckou podporu pozemních jednotek a byl postaven kolem masivního 30mm kanónu GAU-8.' }
+      },
+      {
+        type: 'silhouette',
+        q: { en: 'Identify this aircraft from its silhouette:', cs: 'Identifikujte tento letoun podle jeho siluety:' },
+        opts: { en: ['Spitfire Mk.IX','Hurricane Mk.I','P-51 Mustang','Fw 190'], cs: ['Spitfire Mk.IX','Hurricane Mk.I','P-51 Mustang','Fw 190'] },
+        ans: 0,
+        svgPath: 'M 150,75 C 130,65 90,70 60,72 L 40,75 L 60,78 C 90,80 130,85 150,75 Z M 150,75 C 170,60 230,55 260,60 L 270,65 L 265,68 C 240,68 180,72 150,75 Z M 150,75 L 145,55 C 143,45 148,38 150,35 C 152,38 157,45 155,55 Z M 150,75 L 148,95 L 152,95 L 150,75 Z M 160,72 L 165,58 L 168,60 L 163,74 Z',
+        fact: { en: 'The Spitfire is identifiable by its iconic elliptical wings — a unique design that gave it superior aerodynamic efficiency.', cs: 'Spitfire je rozeznatelný podle svých ikonických eliptických křídel, což je unikátní design pro skvělou aerodynamiku.' }
+      },
+      {
+        type: 'silhouette',
+        q: { en: 'Identify this aircraft from its silhouette:', cs: 'Identifikujte tento letoun podle jeho siluety:' },
+        opts: { en: ['F-14 Tomcat','F-15 Eagle','F-111','Tornado IDS'], cs: ['F-14 Tomcat','F-15 Eagle','F-111','Tornado IDS'] },
+        ans: 0,
+        svgPath: 'M 150,75 C 120,55 70,52 50,58 L 40,62 C 60,64 100,68 130,72 L 150,75 Z M 150,75 C 180,55 230,52 250,58 L 260,62 C 240,64 200,68 170,72 L 150,75 Z M 150,75 L 145,40 C 144,30 150,22 150,22 C 150,22 156,30 155,40 Z M 148,88 L 140,105 L 144,107 L 150,92 L 156,107 L 160,105 L 152,88 Z M 125,70 L 105,62 L 108,64 L 128,72 Z M 175,70 L 195,62 L 192,64 L 172,72 Z',
+        fact: { en: 'The F-14 Tomcat\'s variable-sweep wings could fold back for carrier storage or extend for slow-speed flight.', cs: 'Křídla s měnitelnou geometrií letounu F-14 Tomcat se dala sklopit pro uložení na letadlové lodi nebo roztáhnout pro let nízkou rychlostí.' }
+      },
+      {
+        type: 'silhouette',
+        q: { en: 'Identify this aircraft from its silhouette:', cs: 'Identifikujte tento letoun podle jeho siluety:' },
+        opts: { en: ['B-2 Spirit','B-1 Lancer','F-117 Nighthawk','YB-49'], cs: ['B-2 Spirit','B-1 Lancer','F-117 Nighthawk','YB-49'] },
+        ans: 0,
+        svgPath: 'M 150,80 L 60,90 L 50,85 L 60,82 L 140,75 L 150,72 L 160,75 L 240,82 L 250,85 L 240,90 Z M 150,72 L 145,65 L 150,60 L 155,65 Z',
+        fact: { en: 'The B-2 Spirit flying wing design has no fuselage or tail — its entire shape is the wing.', cs: 'Konstrukce "létajícího křídla" letounu B-2 Spirit nemá trup ani ocas — celý jeho tvar tvoří křídlo.' }
+      },
+      {
+        type: 'silhouette',
+        q: { en: 'Identify this aircraft from its silhouette:', cs: 'Identifikujte tento letoun podle jeho siluety:' },
+        opts: { en: ['F-22 Raptor','Su-57','Eurofighter Typhoon','F-35 Lightning II'], cs: ['F-22 Raptor','Su-57','Eurofighter Typhoon','F-35 Lightning II'] },
+        ans: 0,
+        svgPath: 'M 150,75 C 140,60 120,50 95,48 L 80,50 L 85,55 C 105,56 130,65 148,73 L 150,75 Z M 150,75 C 160,60 180,50 205,48 L 220,50 L 215,55 C 195,56 170,65 152,73 L 150,75 Z M 150,75 L 147,45 C 146,35 150,28 150,28 C 150,28 154,35 153,45 Z M 148,88 L 142,100 L 146,102 L 150,92 L 154,102 L 158,100 L 152,88 Z M 130,68 L 115,55 L 118,57 L 133,70 Z M 170,68 L 185,55 L 182,57 L 167,70 Z',
+        fact: { en: 'The F-22 Raptor combines supercruise, supermaneuverability, and stealth — the defining 5th-generation combination.', cs: 'F-22 Raptor kombinuje supercruise, supermanévrovatelnost a stealth technologii — definující znaky 5. generace.' }
+      },
+      {
+        type: 'sound',
+        q: { en: 'Listen to the engine sound. Which aircraft does it belong to?', cs: 'Poslechněte si zvuk motoru. Kterému letadlu patří?' },
+        opts: { en: ['Spitfire Merlin','L-39 Albatros','Saab Gripen','MiG-21'], cs: ['Spitfire Merlin','L-39 Albatros','Saab Gripen','MiG-21'] },
+        ans: 0,
+        soundSrc: 'assets/nation/cz/SPITFIRE.mp3',
+        fact: { en: 'The Rolls-Royce Merlin\'s distinctive sound — that throaty, musical roar — is arguably the most recognizable piston engine sound.', cs: 'Výrazný zvuk motoru Rolls-Royce Merlin — hluboký, muzikální řev — je pravděpodobně nejznámějším zvukem pístového motoru.' }
+      },
+      {
+        type: 'sound',
+        q: { en: 'Listen to the engine sound. Which aircraft does it belong to?', cs: 'Poslechněte si zvuk motoru. Kterému letadlu patří?' },
+        opts: { en: ['Saab Gripen','F-16 Fighting Falcon','Eurofighter','L-39 Albatros'], cs: ['Saab Gripen','F-16 Fighting Falcon','Eurofighter','L-39 Albatros'] },
+        ans: 0,
+        soundSrc: 'assets/nation/cz/GRIPEN.mp3',
+        fact: { en: 'The Gripen\'s General Electric F404 engine produces a sharp, high-pitched jet whine characteristic of modern lightweight fighters.', cs: 'Motor General Electric F404 letounu Gripen vydává ostré, vysoké proudové pískání charakteristické pro moderní lehké stíhačky.' }
+      },
+      {
+        type: 'sound',
+        q: { en: 'Listen to the engine sound. Which aircraft does it belong to?', cs: 'Poslechněte si zvuk motoru. Kterému letadlu patří?' },
+        opts: { en: ['L-39 Albatros','MiG-29','Su-25 Frogfoot','Hawk T1'], cs: ['L-39 Albatros','MiG-29','Su-25 Frogfoot','Hawk T1'] },
+        ans: 0,
+        soundSrc: 'assets/nation/cz/L39_ALBATROS.mp3',
+        fact: { en: 'The L-39\'s Ivchenko AI-25TL turbofan has a gentler, more musical tone compared to military fighters.', cs: 'Dmychadlový motor Ivčenko AI-25TL letounu L-39 má jemnější a melodičtější tón ve srovnání s vojenskými stíhačkami.' }
+      }
+    ];
+
+    const RANKS = [
+      { min:0, max:19, title: { en: 'Cadet', cs: 'Kadet' }, desc: { en: 'Keep studying the manuals, pilot.', cs: 'Pokračuj ve studiu manuálů, pilote.' } },
+      { min:20, max:39, title: { en: 'Wingman', cs: 'Číslo (Wingman)' }, desc: { en: 'You\'re getting there — keep flying.', cs: 'Jsi na dobré cestě — létej dál.' } },
+      { min:40, max:59, title: { en: 'Ace', cs: 'Letecké Eso' }, desc: { en: 'Solid performance — the skies know your name.', cs: 'Solidní výkon — nebe zná tvé jméno.' } },
+      { min:60, max:79, title: { en: 'Squadron Leader', cs: 'Velitel Letky' }, desc: { en: 'You know your aircraft inside out.', cs: 'Znáš svá letadla nazpaměť.' } },
+      { min:80, max:100, title: { en: 'Wing Commander', cs: 'Velitel Křídla' }, desc: { en: 'Elite pilot. The leaderboard trembles.', cs: 'Elitní pilot. Žebříček se třese.' } }
+    ];
+
+    /* ===== STATE & LOGIC ===== */
+    let currentLang = 'en';
+    let mode='mixed', pilotName='Anonymous', questions=[], qIdx=0, score=0;
+    let correct=0, streak=0, bestStreak=0, timerInterval=null, timeLeft=15;
+    let quizAudio=null, lastEntry=null;
+
+    function switchLang(lang) {
+      currentLang = lang;
+      
+      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+      document.getElementById('btn-cs').classList.toggle('active', lang === 'cs');
+      
+      document.querySelectorAll('[data-' + lang + ']').forEach(el => {
+        const t = el.getAttribute('data-' + lang);
+        if (!t) return;
+        if (t.includes('&') || t.includes('<')) el.innerHTML = t;
+        else el.textContent = t;
+      });
+
+      const inputEl = document.getElementById('pilot-name');
+      if (inputEl) inputEl.placeholder = inputEl.getAttribute('data-' + lang + '-placeholder');
+
+      document.getElementById('html-root').lang = lang;
+      document.title = lang === 'cs' ? 'Kvíz o letadlech — Aero Legacy' : 'Aircraft Quiz — Aero Legacy';
+
+      // Update active quiz text if currently playing
+      if (document.getElementById('screen-quiz').classList.contains('active') && questions.length > 0) {
+        updateDynamicQuizText();
+      }
+
+      // Update results screen if active
+      if (document.getElementById('screen-results').classList.contains('active')) {
+        const acc = Math.round((correct/10)*100);
+        const rank = RANKS.find(r => acc >= r.min && acc <= r.max) || RANKS[0];
+        document.getElementById('rank-badge').textContent = rank.title[currentLang];
+        document.getElementById('rank-desc').textContent = rank.desc[currentLang];
+      }
+
+      // Update leaderboard if active
+      if (document.getElementById('screen-lb').classList.contains('active')) {
+        showLeaderboard();
+      }
+    }
+
+    function updateDynamicQuizText() {
+      const q = questions[qIdx];
+      if (!q) return;
+      
+      document.getElementById('q-text').textContent = q.q[currentLang];
+      
+      const badge = document.getElementById('q-type-badge');
+      if(q.type === 'sound') badge.textContent = currentLang === 'en' ? 'Sound ID' : 'Identifikace zvuku';
+      else if(q.type === 'silhouette') badge.textContent = currentLang === 'en' ? 'Silhouette' : 'Silueta';
+      else badge.textContent = currentLang === 'en' ? 'Trivia' : 'Znalosti';
+
+      const playBtnLabel = document.getElementById('sound-btn-label');
+      if(playBtnLabel && document.getElementById('sound-btn').classList.contains('playing')) {
+          playBtnLabel.textContent = currentLang === 'en' ? 'Stop' : 'Zastavit';
+      } else if (playBtnLabel) {
+          playBtnLabel.textContent = currentLang === 'en' ? 'Play Engine Sound' : 'Přehrát zvuk motoru';
+      }
+
+      const btns = document.querySelectorAll('.ans-btn');
+      const letters = ['A','B','C','D'];
+      btns.forEach((btn, i) => {
+        if (!btn.classList.contains('disabled')) {
+           btn.innerHTML = `<span class="ans-letter">${letters[i]}</span>${q.opts[currentLang][i]}`;
+        }
+      });
+    }
+
+    function selectMode(m){
+      mode=m;
+      document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('selected'));
+      document.getElementById('mode-'+m).classList.add('selected');
+    }
+
+    function showScreen(id){
+      document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');s.style.display='none'});
+      const el=document.getElementById(id);
+      el.style.display='flex'; 
+      el.classList.remove('active'); void el.offsetWidth; el.classList.add('active');
+    }
+
+    function buildQuestions(){
+      let pool;
+      if(mode==='sound') pool=QUESTIONS_ALL.filter(q=>q.type==='sound');
+      else if(mode==='silhouette') pool=QUESTIONS_ALL.filter(q=>q.type==='silhouette');
+      else pool=[...QUESTIONS_ALL];
+      
+      const shuffled = [...pool].sort(()=>Math.random()-.5);
+      
+      return shuffled.slice(0,10).map(q => {
+        // Shuffle an array of indices so EN and CS match perfectly
+        const idxs = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
+        const newOptsEn = idxs.map(i => q.opts.en[i]);
+        const newOptsCs = idxs.map(i => q.opts.cs[i]);
+        const newAns = idxs.indexOf(q.ans);
+        
+        return { ...q, opts: { en: newOptsEn, cs: newOptsCs }, ans: newAns };
+      });
+    }
+
+    function startQuiz(){
+      stopQuizAudio();
+      questions=buildQuestions();
+      qIdx=0; score=0; correct=0; streak=0; bestStreak=0;
+      pilotName=(document.getElementById('pilot-name')||{}).value||'Anonymous';
+      if(!pilotName.trim()) pilotName='Anonymous';
+      showScreen('screen-quiz');
+      renderQuestion();
+    }
+
+    function renderQuestion(){
+      stopQuizAudio();
+      const q = questions[qIdx];
+      document.getElementById('progress-fill').style.width=((qIdx/10)*100)+'%';
+      document.getElementById('q-counter').textContent='Q '+(qIdx+1)+' / 10';
+      document.getElementById('q-score-live').textContent=score+' pts';
+      document.getElementById('q-text').textContent=q.q[currentLang];
+      document.getElementById('feedback-row').innerHTML='';
+
+      const badge=document.getElementById('q-type-badge');
+      if(q.type === 'sound') badge.textContent = currentLang === 'en' ? 'Sound ID' : 'Identifikace zvuku';
+      else if(q.type === 'silhouette') badge.textContent = currentLang === 'en' ? 'Silhouette' : 'Silueta';
+      else badge.textContent = currentLang === 'en' ? 'Trivia' : 'Znalosti';
+      
+      badge.className='q-type-badge '+(q.type==='sound'?'badge-sound':q.type==='silhouette'?'badge-silhouette':'badge-trivia');
+
+      document.getElementById('silhouette-area').style.display=q.type==='silhouette'?'block':'none';
+      document.getElementById('sound-area').style.display=q.type==='sound'?'block':'none';
+
+      if(q.type==='silhouette') renderSilhouette(q);
+      if(q.type==='sound'){
+        document.getElementById('sound-btn').classList.remove('playing');
+        document.getElementById('sound-btn-label').textContent= currentLang === 'en' ? 'Play Engine Sound' : 'Přehrát zvuk motoru';
+      }
+
+      const grid=document.getElementById('answers-grid');
+      grid.innerHTML='';
+      const letters=['A','B','C','D'];
+      q.opts[currentLang].forEach((opt,i)=>{
+        const btn=document.createElement('button');
+        btn.className='ans-btn';
+        btn.innerHTML=`<span class="ans-letter">${letters[i]}</span>${opt}`;
+        btn.onclick=()=>selectAnswer(i);
+        grid.appendChild(btn);
+      });
+
+      startTimer();
+    }
+
+    function renderSilhouette(q){
+      const svg=document.getElementById('silhouette-svg');
+      svg.className='silhouette-svg';
+      svg.innerHTML='<path d="'+q.svgPath+'" fill="#e8d5b0"/>';
+    }
+
+    function startTimer(){
+      clearInterval(timerInterval);
+      timeLeft=15;
+      const fill=document.getElementById('timer-fill');
+      fill.style.width='100%';
+      fill.style.background='var(--gold)';
+      timerInterval=setInterval(()=>{
+        timeLeft-=0.05;
+        const pct=Math.max(0,(timeLeft/15)*100);
+        fill.style.width=pct+'%';
+        if(timeLeft<=5) fill.style.background='var(--ww2)';
+        if(timeLeft<=0){clearInterval(timerInterval);handleTimeout();}
+      },50);
+    }
+
+    function handleTimeout(){
+      disableAnswers();
+      const q=questions[qIdx];
+      streak=0;
+      const btns=document.querySelectorAll('.ans-btn');
+      btns[q.ans].classList.add('correct');
+      const timeTxt = currentLang === 'en' ? 'Time\'s up!' : 'Čas vypršel!';
+      document.getElementById('feedback-row').innerHTML=`<span class="feedback-msg feedback-wrong">✗ ${timeTxt} — ${q.fact[currentLang]}</span>`;
+      setTimeout(nextQuestion,2200);
+    }
+
+    function selectAnswer(idx){
+      clearInterval(timerInterval);
+      disableAnswers();
+      const q=questions[qIdx];
+      const btns=document.querySelectorAll('.ans-btn');
+      const isCorrect=idx===q.ans;
+      btns[idx].classList.add(isCorrect?'correct':'wrong');
+      if(!isCorrect) btns[q.ans].classList.add('correct');
+
+      let pts=0;
+      if(isCorrect){
+        correct++;streak++;if(streak>bestStreak)bestStreak=streak;
+        pts=100+Math.round(timeLeft*10)+(streak>1?(streak-1)*25:0);
+        score+=pts;
+        const correctTxt = currentLang === 'en' ? 'Correct!' : 'Správně!';
+        document.getElementById('feedback-row').innerHTML=`<span class="feedback-msg feedback-correct">✓ ${correctTxt}</span><span class="pts-badge">+${pts} pts</span>`;
+        setTimeout(()=>document.querySelector('.pts-badge').classList.add('show'),50);
+      } else {
+        streak=0;
+        const wrongTxt = currentLang === 'en' ? 'Wrong' : 'Špatně';
+        document.getElementById('feedback-row').innerHTML=`<span class="feedback-msg feedback-wrong">✗ ${wrongTxt} — ${q.fact[currentLang]}</span>`;
+      }
+
+      if(q.type==='silhouette'){
+        document.getElementById('silhouette-svg').classList.add('revealed');
+      }
+
+      document.getElementById('q-score-live').textContent=score+' pts';
+      setTimeout(nextQuestion,isCorrect?1600:2600);
+    }
+
+    function disableAnswers(){
+      document.querySelectorAll('.ans-btn').forEach(b=>{b.classList.add('disabled');b.onclick=null});
+    }
+
+    function nextQuestion(){
+      stopQuizAudio();
+      qIdx++;
+      if(qIdx>=10) finishQuiz();
+      else renderQuestion();
+    }
+
+    function finishQuiz(){
+      document.getElementById('progress-fill').style.width='100%';
+      const acc=Math.round((correct/10)*100);
+      const rank=RANKS.find(r=>acc>=r.min&&acc<=r.max)||RANKS[0];
+      
+      document.getElementById('final-score').textContent=score;
+      document.getElementById('rank-badge').textContent=rank.title[currentLang];
+      document.getElementById('rank-desc').textContent=rank.desc[currentLang];
+      document.getElementById('rb-correct').textContent=correct+'/10';
+      document.getElementById('rb-acc').textContent=acc+'%';
+      document.getElementById('rb-streak').textContent=bestStreak;
+      
+      lastEntry={name:pilotName.trim()||'Anonymous',score,correct,acc,streak:bestStreak,date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'})};
+      saveScore(lastEntry);
+      showScreen('screen-results');
+    }
+
+    async function saveScore(entry){
+      try{
+        const existing=await loadScores();
+        existing.push(entry);
+        existing.sort((a,b)=>b.score-a.score);
+        const top=existing.slice(0,50);
+        if (window.storage) {
+          await window.storage.set('aero_leaderboard_v1',JSON.stringify(top),true);
+        } else {
+          localStorage.setItem('aero_leaderboard_v1', JSON.stringify(top));
+        }
+      }catch(e){}
+    }
+
+    async function loadScores(){
+      try{
+        if (window.storage) {
+          const r=await window.storage.get('aero_leaderboard_v1',true);
+          return r?JSON.parse(r.value):[];
+        } else {
+          const r=localStorage.getItem('aero_leaderboard_v1');
+          return r?JSON.parse(r):[];
+        }
+      }catch(e){return[];}
+    }
+
+    async function showLeaderboard(){
+      showScreen('screen-lb');
+      const loadTxt = currentLang === 'en' ? 'Loading scores…' : 'Načítání žebříčku…';
+      document.getElementById('lb-content').innerHTML=`<div class="lb-empty">${loadTxt}</div>`;
+      const scores=await loadScores();
+      renderLeaderboard(scores);
+    }
+
+    function renderLeaderboard(scores){
+      const top10=scores.slice(0,10);
+      if(!top10.length){
+        const emptyTxt = currentLang === 'en' ? 'No scores yet — be the first to fly!' : 'Zatím žádné výsledky — buďte první!';
+        document.getElementById('lb-content').innerHTML=`<div class="lb-empty">${emptyTxt}</div>`;
+        return;
+      }
+      
+      const headers = currentLang === 'en' 
+        ? { p: 'Pilot', s: 'Score', a: 'Accuracy', d: 'Date', you: 'you' } 
+        : { p: 'Pilot', s: 'Skóre', a: 'Přesnost', d: 'Datum', you: 'vy' };
+
+      const rankClass=['gold','silver','bronze'];
+      let myRow='';
+      
+      if(lastEntry){
+        const myPos=scores.findIndex(s=>s.name===lastEntry.name&&s.score===lastEntry.score&&s.acc===lastEntry.acc);
+        if(myPos>=10){
+          myRow=`<tr class="my-pos-row"><td class="lb-rank">${myPos+1}</td><td class="lb-name me">${esc(lastEntry.name)} ← ${headers.you}</td><td class="lb-score">${lastEntry.score}</td><td class="lb-acc">${lastEntry.acc}%</td><td class="lb-date">${lastEntry.date}</td></tr>`;
+        }
+      }
+      
+      const rows=top10.map((s,i)=>{
+        const isMe=lastEntry&&s.name===lastEntry.name&&s.score===lastEntry.score&&s.acc===lastEntry.acc;
+        const rc=i<3?rankClass[i]:'';
+        return`<tr${isMe?' class="my-pos-row"':''}><td class="lb-rank ${rc}">${i+1}</td><td class="lb-name${isMe?' me':''}">${esc(s.name)}${isMe?` ← ${headers.you}`:''}</td><td class="lb-score">${s.score}</td><td class="lb-acc">${s.acc}%</td><td class="lb-date">${s.date||''}</td></tr>`;
+      }).join('');
+      
+      document.getElementById('lb-content').innerHTML=`
+        <table class="lb-table">
+          <thead><tr><th>#</th><th>${headers.p}</th><th style="text-align:right">${headers.s}</th><th style="text-align:right">${headers.a}</th><th style="text-align:right">${headers.d}</th></tr></thead>
+          <tbody>${rows}${myRow}</tbody>
+        </table>`;
+    }
+
+    function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+    function toggleQuizSound(){
+      const q=questions[qIdx];
+      if(!q||q.type!=='sound') return;
+      const btn=document.getElementById('sound-btn');
+      
+      if(quizAudio&&!quizAudio.paused){
+        quizAudio.pause();quizAudio.currentTime=0;
+        btn.classList.remove('playing');
+        document.getElementById('sound-btn-label').textContent = currentLang === 'en' ? 'Play Engine Sound' : 'Přehrát zvuk motoru';
+      } else {
+        stopQuizAudio();
+        quizAudio=new Audio(q.soundSrc);
+        quizAudio.loop=true;quizAudio.volume=0.8;
+        quizAudio.play().catch(()=>{});
+        btn.classList.add('playing');
+        document.getElementById('sound-btn-label').textContent = currentLang === 'en' ? 'Stop' : 'Zastavit';
+      }
+    }
+
+    function stopQuizAudio(){
+      if(quizAudio){quizAudio.pause();quizAudio.currentTime=0;quizAudio=null;}
+      const btn=document.getElementById('sound-btn');
+      if(btn){
+        btn.classList.remove('playing');
+        const lbl = document.getElementById('sound-btn-label');
+        if(lbl) lbl.textContent = currentLang === 'en' ? 'Play Engine Sound' : 'Přehrát zvuk motoru';
+      }
+    }
+
+    const clickSound = new Audio("assets/click.mp3");
+    clickSound.volume = 0.005; 
+    document.addEventListener("mousedown", () => {
+      const sound = clickSound.cloneNode();
+      sound.volume = clickSound.volume;
+      sound.play().catch(() => {});
+    });
+    window.addEventListener('pagehide', stopQuizAudio);
+
+  </script>
+</body>
+</html>
