@@ -31,7 +31,7 @@
     .lang-btn.active{color:var(--gold);border-color:rgba(201,168,76,0.4)}
 
     /* BG */
-    .hero-bg{position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at 50% 40%,#1c1c1e 0%,#0a0a0a 70%)}
+    .hero-bg{position:fixed;inset:0;z-index:-2;background:#0a0a0a}
     .hero-grid{position:fixed;inset:0;z-index:-1;background-image:linear-gradient(rgba(201,168,76,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.03) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 90% 90% at 50% 50%,black 20%,transparent 75%);-webkit-mask-image:radial-gradient(ellipse 90% 90% at 50% 50%,black 20%,transparent 75%)}
 
     /* LAYOUT */
@@ -217,7 +217,6 @@
       <h1 data-en="Aircraft Quiz" data-cs="Kvíz o letadlech">Aircraft Quiz</h1>
       <p class="sub" data-en="10 questions spanning sounds, silhouettes, and historical trivia. Test your knowledge and post your score to the global leaderboard." data-cs="10 otázek zahrnujících zvuky, siluety a historická fakta. Otestujte své znalosti a zapište se do globálního žebříčku.">10 questions spanning sounds, silhouettes, and historical trivia.</p>
 
-      <!-- MOTIVATION BANNER (shown if player has a previous score) -->
       <div class="motivation-banner" id="motivation-banner">
         <button class="motivation-close" onclick="document.getElementById('motivation-banner').classList.remove('show')">×</button>
         <div class="mb-label" id="motivation-label">Pilot Intelligence</div>
@@ -327,186 +326,242 @@
 </footer>
 
 <script>
-/* =====================================================================
-   ██████╗ ██╗   ██╗███████╗███████╗████████╗██╗ ██████╗ ███╗   ██╗███████╗
-   ██╔══██╗██║   ██║██╔════╝██╔════╝╚══██╔══╝██║██╔═══██╗████╗  ██║██╔════╝
-   ██║  ██║██║   ██║█████╗  ███████╗   ██║   ██║██║   ██║██╔██╗ ██║███████╗
-   ██║  ██║██║   ██║██╔══╝  ╚════██║   ██║   ██║██║   ██║██║╚██╗██║╚════██║
-   ██████╔╝╚██████╔╝███████╗███████║   ██║   ██║╚██████╔╝██║ ╚████║███████║
-   ╚═════╝  ╚═════╝ ╚══════╝╚══════╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
-
-   HOW TO EDIT QUESTIONS
-   ─────────────────────
-   Find the QUESTIONS_ALL array below.
-   There are 3 clearly labelled sections:
-     • TRIVIA     (10 questions)
-     • SOUND      (10 questions)
-     • SILHOUETTE (10 questions)
-
-   Each question object:
-   ┌─────────────────────────────────────────────────────────────┐
-   │ type:     "trivia" | "sound" | "silhouette"                 │
-   │ q:        { en: "English text", cs: "Czech text" }          │
-   │ opts:     { en: ["Correct","Wrong","Wrong","Wrong"],        │
-   │             cs: ["Správná","Špatná","Špatná","Špatná"] }   │
-   │           ↑ Index 0 is ALWAYS the correct answer.           │
-   │             Options are shuffled automatically each round.   │
-   │ ans:      0  ← always 0, do not change                      │
-   │ fact:     { en: "Fun fact", cs: "Fakt" }                    │
-   │                                                             │
-   │ SOUND only:                                                  │
-   │ soundSrc: "assets/sounds/filename.mp3"                       │
-   │                                                             │
-   │ SILHOUETTE — use ONE of:                                     │
-   │ imgSrc:   "assets/silhouettes/filename.png"  ← preferred    │
-   │ svgPath:  "M …"  ← SVG path fallback                        │
-   └─────────────────────────────────────────────────────────────┘
-
-   LEADERBOARD — vlastní PHP/MySQL backend (api.php)
-   ──────────────────────────────────────────────────────────────────────
-   SETUP (jednorázově):
-   1. Vyplň DB_HOST, DB_NAME, DB_USER, DB_PASS v api.php
-   2. Nahraj api.php na server (stejná složka jako quiz.html)
-   3. Otevři https://tvuj-web.cz/api.php?action=install  → vytvoří tabulku
-   4. Vyplň API_URL níže (cesta k api.php)
-
-   PERSONAL SCORES & MOTIVATION
-   ──────────────────────────────
-   Stored in browser cookies (90 days).
-   Automatic messages based on history:
-   • Beat your personal best → celebration
-   • Below personal best   → challenge to improve
-   • First time playing    → welcome message
-   • Played before, long ago → welcome back
-   • Perfect score         → special message
-   • 3+ plays today        → encouragement
-===================================================================== */
-
 /* ─────────────────────────────────────────────────────────────────────
    LEADERBOARD CONFIG
    ───────────────────────────────────────────────────────────────────── */
-const API_URL = 'https://letadlov.xo.je/api.php';  // ← VYPLŇ: cesta k api.php, např. 'https://tvuj-web.cz/api.php'
+const API_URL = 'https://letadlov.xo.je/api.php';
 
-/* ─────────────────────────────────────────────────────────────────────
-   QUESTIONS — 10 TRIVIA + 10 SOUND + 10 SILHOUETTE
-   ───────────────────────────────────────────────────────────────────── */
+/* =====================================================================
+   QUESTIONS_ALL
+   ─────────────────────────────────────────────────────────────────────
+   All questions focus on aircraft from the Aero Legacy nation pages:
+   CZ: L-39 Albatros, Spitfire, Saab Gripen
+   FR: Dassault Rafale, Mirage 2000
+   DE: Bf 109, F-104 Starfighter, Eurofighter Typhoon
+   IT: Eurofighter Typhoon, Fiat G.91
+   JA: A6M Zero, F-4 Phantom II, Mitsubishi F-2
+   RU: MiG-21, MiG-29
+   SE: de Havilland Mosquito, SAAB J 35 Draken, Saab Gripen
+   UK: Eurofighter Typhoon, Supermarine Spitfire
+   US: P-51 Mustang, F-5 Freedom Fighter, F-35 Lightning II
+
+   Index 0 is ALWAYS the correct answer. Options are auto-shuffled.
+   ===================================================================== */
 const QUESTIONS_ALL = [
 
   /* ══════════════════════════════════════════════════════════════
-     ✏️  TRIVIA — 10 knowledge questions
+     ✏️  TRIVIA — 20 questions (10 drawn per round)
      ══════════════════════════════════════════════════════════════ */
   {
     type: 'trivia',
-    q:    { en: 'Which aircraft was the first operational jet fighter used in combat?',
-            cs: 'Který letoun byl první operační proudový stíhač použitý v boji?' },
-    opts: { en: ['Me 262','Gloster Meteor','He 162','P-80 Shooting Star'],
-            cs: ['Me 262','Gloster Meteor','He 162','P-80 Shooting Star'] },
+    q:    { en: 'The Aero L-39 Albatros jet trainer was manufactured near which Czech city?',
+            cs: 'Kde byl vyráběn cvičný proud. letoun Aero L-39 Albatros?' },
+    opts: { en: ['Vodochody (near Prague)','Brno','Plzeň','Ostrava'],
+            cs: ['Vodochody (u Prahy)','Brno','Plzeň','Ostrava'] },
     ans: 0,
-    fact: { en: 'The Me 262 entered Luftwaffe service in 1944, becoming the world\'s first operational jet fighter.',
-            cs: 'Me 262 vstoupil do služby u Luftwaffe v roce 1944 jako první proudový stíhač světa.' }
+    fact: { en: 'Aero Vodochody, north of Prague, produced over 2,900 L-39 Albatros trainers for more than 30 nations.',
+            cs: 'Aero Vodochody severně od Prahy vyrobilo přes 2 900 cvičných letounů L-39 pro více než 30 zemí.' }
   },
   {
     type: 'trivia',
-    q:    { en: 'The Supermarine Spitfire was powered by which engine?',
-            cs: 'Který motor poháněl Supermarine Spitfire?' },
-    opts: { en: ['Rolls-Royce Merlin','Bristol Hercules','Napier Sabre','Allison V-1710'],
-            cs: ['Rolls-Royce Merlin','Bristol Hercules','Napier Sabre','Allison V-1710'] },
+    q:    { en: 'The Supermarine Spitfire\'s distinctive wing shape is described as:',
+            cs: 'Charakteristický tvar křídla Supermarine Spitfiru je označován jako:' },
+    opts: { en: ['Elliptical','Delta','Swept','Tapered straight'],
+            cs: ['Eliptické','Delta','Šípové','Zužující se přímé'] },
     ans: 0,
-    fact: { en: 'The Rolls-Royce Merlin V12 powered the Spitfire through most of its variants.',
-            cs: 'Motor Rolls-Royce Merlin V12 poháněl Spitfire ve většině jeho variant.' }
+    fact: { en: 'The Spitfire\'s elliptical wings gave it exceptional aerodynamic efficiency and are unique in aviation history.',
+            cs: 'Eliptická křídla Spitfiru mu zajistila výjimečnou aerodynamiku a jsou unikátní v historii letectví.' }
   },
   {
     type: 'trivia',
-    q:    { en: 'What does MiG stand for in Soviet/Russian aircraft?',
-            cs: 'Co znamená zkratka MiG u sovětských/ruských letadel?' },
-    opts: { en: ['Mikoyan and Gurevich','Military Interceptor Grade','Mobile Interceptor Group','Mikhailov and Gorsky'],
-            cs: ['Mikojan a Gurevič','Military Interceptor Grade','Mobile Interceptor Group','Michajlov a Gorsky'] },
+    q:    { en: 'How many Saab JAS 39 Gripens does the Czech Air Force operate?',
+            cs: 'Kolik letounů Saab JAS 39 Gripen provozuje Vzdušné síly AČR?' },
+    opts: { en: ['14','8','24','10'],
+            cs: ['14','8','24','10'] },
     ans: 0,
-    fact: { en: 'MiG stands for Mikoyan-Gurevich, the Soviet design bureau founded by Artem Mikoyan and Mikhail Gurevich.',
-            cs: 'MiG = Mikojan-Gurevič, sovětská konstrukční kancelář Artěma Mikojana a Michajla Gureviče.' }
+    fact: { en: 'The Czech Air Force leases 14 JAS 39C/D Gripens from Sweden, making them the backbone of Czech air defence.',
+            cs: 'Vzdušné síly AČR pronajímají 14 letounů JAS 39C/D Gripen od Švédska — páteř české vzdušné obrany.' }
   },
   {
     type: 'trivia',
-    q:    { en: 'The SR-71 Blackbird holds the speed record for air-breathing aircraft. What is its top speed?',
-            cs: 'SR-71 Blackbird drží rychlostní rekord. Jaká je jeho maximální rychlost?' },
-    opts: { en: ['Mach 3.3','Mach 2.8','Mach 4.1','Mach 2.5'],
-            cs: ['Mach 3,3','Mach 2,8','Mach 4,1','Mach 2,5'] },
+    q:    { en: 'The Dassault Rafale is produced by which country?',
+            cs: 'Kterou zemí je vyráběn letoun Dassault Rafale?' },
+    opts: { en: ['France','Germany','Italy','Sweden'],
+            cs: ['Francie','Německo','Itálie','Švédsko'] },
     ans: 0,
-    fact: { en: 'The SR-71 reached Mach 3.3 (3,540 km/h) — a record it still holds for crewed air-breathing aircraft.',
-            cs: 'SR-71 dosáhl Mach 3,3 (3 540 km/h) — dodnes platný rekord pro pilotovaná letadla s proudovým motorem.' }
+    fact: { en: 'The Rafale is a fully French-designed and built multirole fighter, entering service with the French Air Force in 2001.',
+            cs: 'Rafale je plně francouzsky navržený a vyrobený víceúčelový stíhač, který vstoupil do služby v roce 2001.' }
   },
   {
     type: 'trivia',
-    q:    { en: 'Which nation developed the Saab JAS 39 Gripen?',
-            cs: 'Který stát vyvinul letoun Saab JAS 39 Gripen?' },
-    opts: { en: ['Sweden','Norway','Finland','Denmark'],
-            cs: ['Švédsko','Norsko','Finsko','Dánsko'] },
+    q:    { en: 'The Dassault Mirage 2000 uses which wing configuration?',
+            cs: 'Jaké uspořádání křídla používá letoun Dassault Mirage 2000?' },
+    opts: { en: ['Tailless delta','Variable sweep','Canard-delta','Straight wing'],
+            cs: ['Delta bez ocasních ploch','Proměnlivá geometrie','Canard-delta','Přímé křídlo'] },
     ans: 0,
-    fact: { en: 'Sweden\'s SAAB developed the Gripen as a lightweight multirole fighter, first flying in 1988.',
-            cs: 'Švédská SAAB vyvinula Gripen jako lehký víceúčelový stíhač, který poprvé vzlétl v roce 1988.' }
+    fact: { en: 'The Mirage 2000 revived Dassault\'s classic tailless delta configuration, offering high speed and simplicity.',
+            cs: 'Mirage 2000 oživil klasickou konfiguraci bezocasého delta od Dassaultu — rychlost a jednoduchost.' }
   },
   {
     type: 'trivia',
-    q:    { en: 'The Aero L-39 Albatros was manufactured in which town?',
-            cs: 'Ve kterém místě se vyráběl Aero L-39 Albatros?' },
-    opts: { en: ['Vodochody','Brno','Prague','Plzeň'],
-            cs: ['Vodochody','Brno','Praha','Plzeň'] },
+    q:    { en: 'The Messerschmitt Bf 109 was the primary fighter of which air force in World War II?',
+            cs: 'Bf 109 byl primárním stíhačem kterého letectva ve druhé světové válce?' },
+    opts: { en: ['Luftwaffe (Germany)','Regia Aeronautica (Italy)','Imperial Japanese Army Air Force','RAF (Britain)'],
+            cs: ['Luftwaffe (Německo)','Regia Aeronautica (Itálie)','Japonské císařské letectvo','RAF (Británie)'] },
     ans: 0,
-    fact: { en: 'Aero Vodochody, near Prague, produced over 2,900 L-39 Albatros jet trainers.',
-            cs: 'Aero Vodochody poblíž Prahy vyrobilo přes 2 900 cvičných letounů L-39 Albatros.' }
+    fact: { en: 'The Bf 109 was the backbone of the Luftwaffe, with over 33,000 built — the most produced fighter of WW2.',
+            cs: 'Bf 109 byl páteří Luftwaffe. Bylo jich postaveno přes 33 000 — nejvíce ze všech stíhačů 2. světové války.' }
   },
   {
     type: 'trivia',
-    q:    { en: 'What generation fighter is the F-22 Raptor?',
-            cs: 'Do jaké generace patří F-22 Raptor?' },
-    opts: { en: ['5th generation','4th generation','4.5th generation','6th generation'],
-            cs: ['5. generace','4. generace','4,5 generace','6. generace'] },
+    q:    { en: 'The Lockheed F-104 Starfighter earned which famous nickname?',
+            cs: 'Jakou slavnou přezdívku získal F-104 Starfighter?' },
+    opts: { en: ['The Missile with a Man in It','The Lead Sled','The Flying Coffin','The Widow Maker'],
+            cs: ['Raketa s mužem uvnitř','Olověný soumar','Létající rakev','Vdovotvorce'] },
     ans: 0,
-    fact: { en: 'The F-22 Raptor was the world\'s first operational 5th-generation stealth air superiority fighter.',
-            cs: 'F-22 Raptor byl prvním operačním stealth stíhačem vzdušné nadvlády 5. generace na světě.' }
+    fact: { en: 'The F-104\'s tiny razor-sharp wings were so thin they had to be handled with care — earning it the famous nickname.',
+            cs: 'Extrémně malá a ostrá křídla F-104 si vysloužila přezdívku "Raketa s mužem uvnitř".' }
   },
   {
     type: 'trivia',
-    q:    { en: 'Which aircraft dropped the atomic bombs on Japan in 1945?',
-            cs: 'Který letoun shodil atomové bomby na Japonsko v roce 1945?' },
-    opts: { en: ['B-29 Superfortress','B-17 Flying Fortress','B-24 Liberator','Lancaster Bomber'],
-            cs: ['B-29 Superfortress','B-17 Flying Fortress','B-24 Liberator','Lancaster Bomber'] },
+    q:    { en: 'The Eurofighter Typhoon is a joint project between which four nations?',
+            cs: 'Eurofighter Typhoon je společný projekt kterých čtyř zemí?' },
+    opts: { en: ['UK, Germany, Italy, Spain','UK, France, Germany, Italy','Germany, Sweden, Spain, Italy','UK, France, Spain, Netherlands'],
+            cs: ['UK, Německo, Itálie, Španělsko','UK, Francie, Německo, Itálie','Německo, Švédsko, Španělsko, Itálie','UK, Francie, Španělsko, Nizozemsko'] },
     ans: 0,
-    fact: { en: '"Enola Gay" and "Bockscar" — both B-29 Superfortresses — delivered the atomic bombs over Hiroshima and Nagasaki.',
-            cs: '"Enola Gay" a "Bockscar" — oba B-29 Superfortress — svrhly atomové bomby na Hirošimu a Nagasaki.' }
+    fact: { en: 'The Eurofighter consortium consists of BAE Systems (UK), Airbus (Germany/Spain), and Leonardo (Italy).',
+            cs: 'Konsorcium Eurofighter tvoří BAE Systems (UK), Airbus (Německo/Španělsko) a Leonardo (Itálie).' }
   },
   {
     type: 'trivia',
-    q:    { en: 'What is the primary role of the A-10 Thunderbolt II (Warthog)?',
-            cs: 'Jaká je hlavní role A-10 Thunderbolt II (Warthog)?' },
-    opts: { en: ['Close air support','Air superiority','Strategic bombing','Reconnaissance'],
-            cs: ['Blízká letecká podpora','Vzdušná nadvláda','Strategické bombardování','Průzkum'] },
+    q:    { en: 'The Fiat G.91 was designed to fulfil a NATO requirement for a light tactical strike aircraft. Which country built it?',
+            cs: 'Fiat G.91 byl navržen jako lehký taktický útočný letoun NATO. Která země ho stavěla?' },
+    opts: { en: ['Italy','France','Germany','USA'],
+            cs: ['Itálie','Francie','Německo','USA'] },
     ans: 0,
-    fact: { en: 'The A-10 was designed for close air support, built entirely around its massive 30mm GAU-8 cannon.',
-            cs: 'A-10 byl navržen pro blízkou leteckou podporu a postaven kolem masivního 30mm kanónu GAU-8.' }
+    fact: { en: 'The Italian Fiat G.91 won the 1953 NATO light strike competition and served with Italy, Germany, and Portugal.',
+            cs: 'Italský Fiat G.91 vyhrál soutěž NATO z roku 1953 a sloužil v Itálii, Německu a Portugalsku.' }
   },
   {
     type: 'trivia',
-    q:    { en: 'The Mitsubishi A6M Zero was the main carrier fighter of which WW2 navy?',
-            cs: 'Mitsubishi A6M Zero byl hlavním palubním stíhačem kterého námořnictva ve 2. sv. válce?' },
-    opts: { en: ['Imperial Japanese Navy','Royal Navy','US Navy','Regia Marina'],
-            cs: ['Japonské císařské námořnictvo','Královské námořnictvo','US Navy','Regia Marina'] },
+    q:    { en: 'The Mitsubishi A6M Zero had exceptional range. What was one key reason?',
+            cs: 'Mitsubishi A6M Zero měl výjimečný dolet. Jaký byl jeden z klíčových důvodů?' },
+    opts: { en: ['Extremely lightweight construction with no armour or self-sealing tanks','Larger fuel tanks than contemporary fighters','More powerful engine than US fighters','Retractable external fuel tanks'],
+            cs: ['Extrémně lehká konstrukce bez pancíře a samoutěsnících nádrží','Větší palivové nádrže než soudobé stíhačky','Výkonnější motor než u amerických stíhaček','Výsuvné přídavné palivové nádrže'] },
     ans: 0,
-    fact: { en: 'The A6M Zero dominated the Pacific in 1941–42 with exceptional range and maneuverability.',
-            cs: 'Zero ovládalo Pacifik v letech 1941–42 díky výjimečnému doletu a obratnosti.' }
+    fact: { en: 'The Zero achieved range by sacrificing armour and self-sealing tanks — deadly early in the war, but vulnerable as it progressed.',
+            cs: 'Zero dosáhlo doletu obětováním pancíře a samoutěsňovacích nádrží — smrtelné zpočátku, ale zranitelné s postupem války.' }
+  },
+  {
+    type: 'trivia',
+    q:    { en: 'The McDonnell Douglas F-4 Phantom II was originally designed for which role?',
+            cs: 'F-4 Phantom II byl původně navržen pro jakou roli?' },
+    opts: { en: ['Fleet air defence (carrier-based interceptor)','Close air support','Strategic bombing','Tactical reconnaissance'],
+            cs: ['Obrana loďstva (palubní interceptor)','Blízká letecká podpora','Strategické bombardování','Taktický průzkum'] },
+    ans: 0,
+    fact: { en: 'The F-4 Phantom was designed by McDonnell for the US Navy as a fleet defence interceptor, later adapted for many roles.',
+            cs: 'F-4 Phantom byl navržen pro US Navy jako interceptor obrany loďstva, later upravený pro mnoho dalších rolí.' }
+  },
+  {
+    type: 'trivia',
+    q:    { en: 'The Mitsubishi F-2 is a Japanese development of which American aircraft?',
+            cs: 'Mitsubishi F-2 je japonský vývoj jakého amerického letounu?' },
+    opts: { en: ['F-16 Fighting Falcon','F-15 Eagle','F/A-18 Hornet','F-4 Phantom II'],
+            cs: ['F-16 Fighting Falcon','F-15 Eagle','F/A-18 Hornet','F-4 Phantom II'] },
+    ans: 0,
+    fact: { en: 'The F-2 is a joint Japan-US development based on the F-16, with a larger wing and Japanese avionics — nicknamed "Viper Zero".',
+            cs: 'F-2 je japonsko-americký vývoj F-16 s větším křídlem a japonskou avionikou — přezdívaný "Viper Zero".' }
+  },
+  {
+    type: 'trivia',
+    q:    { en: 'The MiG-21 is the most produced supersonic jet fighter in history. Approximately how many were built?',
+            cs: 'MiG-21 je nejvíce vyráběný nadzvukový stíhač v historii. Kolik jich bylo postaveno?' },
+    opts: { en: ['Over 11,000','About 5,000','About 7,500','Over 15,000'],
+            cs: ['Přes 11 000','Asi 5 000','Asi 7 500','Přes 15 000'] },
+    ans: 0,
+    fact: { en: 'Over 11,000 MiG-21s were built by the USSR, plus thousands more under licence in China, India, and Czechoslovakia.',
+            cs: 'Přes 11 000 MiGů-21 bylo postaveno v SSSR a tisíce dalších v Číně, Indii a Československu.' }
+  },
+  {
+    type: 'trivia',
+    q:    { en: 'The MiG-29 became famous for which cockpit system that shocked Western analysts in the 1990s?',
+            cs: 'MiG-29 proslavil který systém v kokpitu, jenž šokoval západní analytiky v 90. letech?' },
+    opts: { en: ['Helmet-mounted targeting sight (HMS)','Head-up display (HUD)','Fly-by-wire controls','Glass cockpit displays'],
+            cs: ['Helma se zaměřovacím systémem (HMS)','Průhledový displej (HUD)','Řízení fly-by-wire','Skleněný kokpit'] },
+    ans: 0,
+    fact: { en: 'The MiG-29\'s Shchel-3UM helmet sight paired with the R-73 missile gave pilots off-boresight kill capability years before the West.',
+            cs: 'Helma Shchel-3UM s raketou R-73 dala sovětským pilotům schopnost bočního zaměření roky před Západem.' }
+  },
+  {
+    type: 'trivia',
+    q:    { en: 'The de Havilland Mosquito, operated by Sweden, was unusual for being made primarily from what material?',
+            cs: 'de Havilland Mosquito, provozovaný i Švédskem, byl neobvyklý svým primárním stavebním materiálem. Co to bylo?' },
+    opts: { en: ['Wood (balsa and birch laminate)','Aluminium alloy','Steel tubing with fabric','Composite materials'],
+            cs: ['Dřevo (balsa a březová překližka)','Hliníková slitina','Ocelové trubky s plátnem','Kompozitní materiály'] },
+    ans: 0,
+    fact: { en: 'The Mosquito\'s wooden construction freed up aluminium for other aircraft — and made it faster than most metal fighters of its era.',
+            cs: 'Dřevěná konstrukce Mosquita uvolnila hliník pro jiná letadla — a udělala ho rychlejším než většinu kovových stíhačů té doby.' }
+  },
+  {
+    type: 'trivia',
+    q:    { en: 'The SAAB J 35 Draken had a highly unusual wing. What was its configuration called?',
+            cs: 'SAAB J 35 Draken měl velmi neobvyklé křídlo. Jak se tato konfigurace nazývá?' },
+    opts: { en: ['Double-delta','Cranked arrow','Variable sweep','Ogival delta'],
+            cs: ['Dvojité delta','Lámané šipové','Proměnlivá geometrie','Ogivalní delta'] },
+    ans: 0,
+    fact: { en: 'The J 35 Draken\'s double-delta wing was revolutionary in the 1950s, delivering supersonic performance with STOL capability.',
+            cs: 'Dvojité delta křídlo J 35 Draken bylo revoluční v 50. letech — nadzvuková rychlost s krátkým vzletem a přistáním.' }
+  },
+  {
+    type: 'trivia',
+    q:    { en: 'The North American P-51 Mustang\'s exceptional range was largely due to which development?',
+            cs: 'Výjimečný dolet P-51 Mustang byl do velké míry umožněn čím?' },
+    opts: { en: ['Drop tanks and a fuel-efficient Merlin engine','Larger internal fuel tanks only','A more powerful Allison engine','Reduced weapons load'],
+            cs: ['Přídavné nádrže a úsporný motor Merlin','Pouze větší vnitřní palivové nádrže','Výkonnější motor Allison','Snížené množství zbraní'] },
+    ans: 0,
+    fact: { en: 'The P-51D with drop tanks could escort bombers to Berlin and back — a game-changing capability in the strategic bombing campaign.',
+            cs: 'P-51D s přídavnými nádržemi dokázal doprovázet bombardéry až do Berlína a zpět — klíčová schopnost pro strategické bombardování.' }
+  },
+  {
+    type: 'trivia',
+    q:    { en: 'The Northrop F-5 Freedom Fighter was designed primarily for which purpose?',
+            cs: 'Northrop F-5 Freedom Fighter byl navržen primárně pro jaký účel?' },
+    opts: { en: ['Export to US allies as a low-cost lightweight fighter','US Air Force air superiority','Carrier operations','Ground attack only'],
+            cs: ['Export spojencům USA jako levný lehký stíhač','Vzdušná nadvláda USAF','Palubní operace','Pouze pozemní útok'] },
+    ans: 0,
+    fact: { en: 'The F-5 was deliberately designed for affordability and simplicity — one of the most widely exported fighters in history.',
+            cs: 'F-5 byl záměrně navržen jako dostupný a jednoduchý — stal se jedním z nejrozšířenějších exportovaných stíhačů v historii.' }
+  },
+  {
+    type: 'trivia',
+    q:    { en: 'The F-35 Lightning II has three distinct variants. Which one can take off and land vertically?',
+            cs: 'F-35 Lightning II má tři varianty. Která může vzlétat a přistávat vertikálně?' },
+    opts: { en: ['F-35B (STOVL variant)','F-35A (conventional)','F-35C (carrier)','All three variants'],
+            cs: ['F-35B (varianta STOVL)','F-35A (konvenční)','F-35C (palubní)','Všechny tři varianty'] },
+    ans: 0,
+    fact: { en: 'The F-35B uses a shaft-driven lift fan and rotating exhaust nozzle for short take-off and vertical landing (STOVL).',
+            cs: 'F-35B používá zdvihový ventilátor poháněný hřídelem a otočnou výfukovou trysku pro krátký vzlet a vertikální přistání.' }
+  },
+  {
+    type: 'trivia',
+    q:    { en: 'The Saab Gripen uses which engine?',
+            cs: 'Jaký motor pohání Saab Gripen?' },
+    opts: { en: ['General Electric F404','Pratt & Whitney F100','Rolls-Royce Spey','Volvo RM12 (F404 derivative)'],
+            cs: ['General Electric F404','Pratt & Whitney F100','Rolls-Royce Spey','Volvo RM12 (derivát F404)'] },
+    ans: 0,
+    fact: { en: 'The Gripen C/D is powered by the Volvo RM12, a licence-built derivative of the GE F404 turbofan, producing 80 kN with afterburner.',
+            cs: 'Gripen C/D pohání motor Volvo RM12, licenční derivát GE F404, produkující 80 kN s přídavným spalováním.' }
   },
 
   /* ══════════════════════════════════════════════════════════════
      🔊  SOUND — 10 engine sound questions
-         soundSrc: path to your MP3 file
-         Place audio in  assets/sounds/  (or any path you prefer)
      ══════════════════════════════════════════════════════════════ */
   {
     type: 'sound',
     q:    { en: 'Listen to the engine sound. Which aircraft does it belong to?',
             cs: 'Poslechněte si zvuk motoru. Kterému letadlu patří?' },
-    opts: { en: ['Spitfire (Merlin)','L-39 Albatros','Saab Gripen','MiG-21'],
-            cs: ['Spitfire (Merlin)','L-39 Albatros','Saab Gripen','MiG-21'] },
+    opts: { en: ['Spitfire (Rolls-Royce Merlin)','P-51 Mustang','Bf 109','Hurricane Mk.I'],
+            cs: ['Spitfire (Rolls-Royce Merlin)','P-51 Mustang','Bf 109','Hurricane Mk.I'] },
     ans: 0,
     soundSrc: 'assets/nation/cz/SPITFIRE.mp3',
     fact: { en: 'The Rolls-Royce Merlin\'s throaty roar is the most recognisable piston engine sound in aviation history.',
@@ -516,157 +571,137 @@ const QUESTIONS_ALL = [
     type: 'sound',
     q:    { en: 'Listen to the engine sound. Which aircraft does it belong to?',
             cs: 'Poslechněte si zvuk motoru. Kterému letadlu patří?' },
-    opts: { en: ['Saab Gripen','F-16 Fighting Falcon','Eurofighter','L-39 Albatros'],
-            cs: ['Saab Gripen','F-16 Fighting Falcon','Eurofighter','L-39 Albatros'] },
+    opts: { en: ['Saab Gripen (GE F404)','F-16 Fighting Falcon','Eurofighter Typhoon','Dassault Rafale'],
+            cs: ['Saab Gripen (GE F404)','F-16 Fighting Falcon','Eurofighter Typhoon','Dassault Rafale'] },
     ans: 0,
     soundSrc: 'assets/nation/cz/GRIPEN.mp3',
-    fact: { en: 'The Gripen\'s GE F404 produces a sharp, high-pitched whine typical of modern lightweight fighters.',
-            cs: 'Motor GE F404 Gripenu vydává ostré pískání typické pro moderní lehké stíhačky.' }
+    fact: { en: 'The Gripen\'s GE F404 turbofan produces a sharp, high-pitched whine characteristic of lightweight modern fighters.',
+            cs: 'Motor GE F404 Gripenu vydává ostré pískání — typické pro moderní lehké stíhačky.' }
   },
   {
     type: 'sound',
     q:    { en: 'Listen to the engine sound. Which aircraft does it belong to?',
             cs: 'Poslechněte si zvuk motoru. Kterému letadlu patří?' },
-    opts: { en: ['L-39 Albatros','MiG-29','Su-25 Frogfoot','Hawk T1'],
-            cs: ['L-39 Albatros','MiG-29','Su-25 Frogfoot','Hawk T1'] },
+    opts: { en: ['Aero L-39 Albatros','BAe Hawk T1','Alpha Jet','Aero L-159 ALCA'],
+            cs: ['Aero L-39 Albatros','BAe Hawk T1','Alpha Jet','Aero L-159 ALCA'] },
     ans: 0,
     soundSrc: 'assets/nation/cz/L39_ALBATROS.mp3',
-    fact: { en: 'The L-39\'s Ivchenko AI-25TL turbofan has a gentler, more musical tone — fitting for a trainer.',
-            cs: 'Motor Ivčenko AI-25TL letounu L-39 má jemnější tón — vhodný pro cvičný letoun.' }
-  },
-  /* ── Add 7 more sound questions here ──────────────────────────
-     Copy a block above, change soundSrc + opts + fact.
-     The first option (index 0) is always correct.              */
-  {
-    type: 'sound',
-    q:    { en: 'Listen to the engine sound. Which aircraft does it belong to?',
-            cs: 'Poslechněte si zvuk motoru. Kterému letadlu patří?' },
-    opts: { en: ['Spitfire (Merlin)','P-51 Mustang','Fw 190','Hurricane Mk.I'],
-            cs: ['Spitfire (Merlin)','P-51 Mustang','Fw 190','Hurricane Mk.I'] },
-    ans: 0,
-    soundSrc: 'assets/nation/cz/SPITFIRE.mp3',           /* ← replace with new file */
-    fact: { en: 'Replace this with a real fact about the correct aircraft.',
-            cs: 'Nahraďte skutečným faktem o správném letadle.' }
+    fact: { en: 'The L-39\'s Ivchenko AI-25TL turbofan has a softer, more musical tone than a combat jet — befitting a training aircraft.',
+            cs: 'Turboventilátor AI-25TL letounu L-39 má jemnější tón než bojový letoun — vhodná signatura pro cvičný stroj.' }
   },
   {
     type: 'sound',
-    q:    { en: 'Listen to the engine sound. Which aircraft does it belong to?',
-            cs: 'Poslechněte si zvuk motoru. Kterému letadlu patří?' },
-    opts: { en: ['Saab Gripen','F-22 Raptor','Rafale','MiG-29'],
-            cs: ['Saab Gripen','F-22 Raptor','Rafale','MiG-29'] },
+    q:    { en: 'Listen to this WW2 engine sound. Which aircraft does it belong to?',
+            cs: 'Poslechněte si zvuk motoru z 2. sv. války. Kterému letounu patří?' },
+    opts: { en: ['Spitfire (Rolls-Royce Merlin)','Mitsubishi A6M Zero','Fw 190','P-51 Mustang'],
+            cs: ['Spitfire (Rolls-Royce Merlin)','Mitsubishi A6M Zero','Fw 190','P-51 Mustang'] },
     ans: 0,
-    soundSrc: 'assets/nation/cz/GRIPEN.mp3',              /* ← replace */
-    fact: { en: 'Replace this with a real fact.',
-            cs: 'Nahraďte skutečným faktem.' }
+    soundSrc: 'assets/nation/cz/SPITFIRE.mp3',
+    fact: { en: 'The Spitfire served from 1938 into the early 1950s. Its Merlin engine sound is still celebrated at airshows worldwide.',
+            cs: 'Spitfire sloužil od roku 1938 do počátku 50. let. Zvuk jeho motoru Merlin je stále oslavován na leteckých přehlídkách.' }
   },
   {
     type: 'sound',
-    q:    { en: 'Listen to the engine sound. Which aircraft does it belong to?',
-            cs: 'Poslechněte si zvuk motoru. Kterému letadlu patří?' },
-    opts: { en: ['L-39 Albatros','Alpha Jet','BAe Hawk','Aero L-159'],
-            cs: ['L-39 Albatros','Alpha Jet','BAe Hawk','Aero L-159'] },
+    q:    { en: 'This engine belongs to a Czech-built jet trainer. Which aircraft?',
+            cs: 'Tento motor patří českému proudovému cvičnému letounu. Kterému?' },
+    opts: { en: ['Aero L-39 Albatros','MiG-21','F-104 Starfighter','SAAB J 35 Draken'],
+            cs: ['Aero L-39 Albatros','MiG-21','F-104 Starfighter','SAAB J 35 Draken'] },
     ans: 0,
-    soundSrc: 'assets/nation/cz/L39_ALBATROS.mp3',        /* ← replace */
-    fact: { en: 'Replace this with a real fact.',
-            cs: 'Nahraďte skutečným faktem.' }
+    soundSrc: 'assets/nation/cz/L39_ALBATROS.mp3',
+    fact: { en: 'More than 2,900 L-39s were built — making it the most widely used jet trainer in the world for decades.',
+            cs: 'Bylo postaveno více než 2 900 kusů L-39 — po desetiletí nejrozšířenější proudový cvičný letoun světa.' }
   },
   {
     type: 'sound',
-    q:    { en: 'Listen to the engine sound. Which aircraft does it belong to?',
-            cs: 'Poslechněte si zvuk motoru. Kterému letadlu patří?' },
-    opts: { en: ['Spitfire (Merlin)','Zero A6M','Fw 190','P-47 Thunderbolt'],
-            cs: ['Spitfire (Merlin)','Zero A6M','Fw 190','P-47 Thunderbolt'] },
+    q:    { en: 'This turbofan belongs to a 4th-generation multirole fighter. Which one?',
+            cs: 'Tento turbodmychadlový motor patří víceúčelovému stíhači 4. generace. Kterému?' },
+    opts: { en: ['Saab Gripen','MiG-29 Fulcrum','F-5 Freedom Fighter','Mirage 2000'],
+            cs: ['Saab Gripen','MiG-29 Fulcrum','F-5 Freedom Fighter','Mirage 2000'] },
     ans: 0,
-    soundSrc: 'assets/nation/cz/SPITFIRE.mp3',            /* ← replace */
-    fact: { en: 'Replace this with a real fact.',
-            cs: 'Nahraďte skutečným faktem.' }
+    soundSrc: 'assets/nation/cz/GRIPEN.mp3',
+    fact: { en: 'The Gripen is the lightest and most cost-efficient 4th-generation fighter in Western service.',
+            cs: 'Gripen je nejlehčí a nejúspornější stíhač 4. generace v západní službě.' }
   },
   {
     type: 'sound',
-    q:    { en: 'Listen to the engine sound. Which aircraft does it belong to?',
-            cs: 'Poslechněte si zvuk motoru. Kterému letadlu patří?' },
-    opts: { en: ['L-39 Albatros','Gripen','Tornado IDS','Su-25'],
-            cs: ['L-39 Albatros','Gripen','Tornado IDS','Su-25'] },
+    q:    { en: 'This engine sound belongs to the aircraft that defended Britain in 1940. Which is it?',
+            cs: 'Tento zvuk motoru patří letounu, který bránil Británii v roce 1940. Který to je?' },
+    opts: { en: ['Spitfire (Rolls-Royce Merlin)','Bf 109 (Daimler-Benz DB 601)','Hurricane','Me 262'],
+            cs: ['Spitfire (Rolls-Royce Merlin)','Bf 109 (Daimler-Benz DB 601)','Hurricane','Me 262'] },
     ans: 0,
-    soundSrc: 'assets/nation/cz/L39_ALBATROS.mp3',        /* ← replace */
-    fact: { en: 'Replace this with a real fact.',
-            cs: 'Nahraďte skutečným faktem.' }
+    soundSrc: 'assets/nation/cz/SPITFIRE.mp3',
+    fact: { en: 'During the Battle of Britain, the Spitfire and Hurricane together defeated the Luftwaffe — the Spitfire became the symbol of resistance.',
+            cs: 'Během Bitvy o Británii Spitfire a Hurricane společně porazily Luftwaffe — Spitfire se stal symbolem odporu.' }
   },
   {
     type: 'sound',
-    q:    { en: 'Listen to the engine sound. Which aircraft does it belong to?',
-            cs: 'Poslechněte si zvuk motoru. Kterému letadlu patří?' },
-    opts: { en: ['Saab Gripen','F/A-18 Hornet','Eurofighter','F-35'],
-            cs: ['Saab Gripen','F/A-18 Hornet','Eurofighter','F-35'] },
+    q:    { en: 'Which Swedish fighter\'s engine does this sound belong to?',
+            cs: 'Tomuto zvuku motoru odpovídá který švédský stíhač?' },
+    opts: { en: ['Saab Gripen (JAS 39)','SAAB J 35 Draken','Viggen AJ 37','SAAB J 29 Tunnan'],
+            cs: ['Saab Gripen (JAS 39)','SAAB J 35 Draken','Viggen AJ 37','SAAB J 29 Tunnan'] },
     ans: 0,
-    soundSrc: 'assets/nation/cz/GRIPEN.mp3',              /* ← replace */
-    fact: { en: 'Replace this with a real fact.',
-            cs: 'Nahraďte skutečným faktem.' }
+    soundSrc: 'assets/nation/cz/GRIPEN.mp3',
+    fact: { en: 'The Gripen continues a long line of innovative SAAB fighters — the J 29, Draken, Viggen, and now the Gripen E/F series.',
+            cs: 'Gripen pokračuje v dlouhé řadě inovativních stíhaček SAAB — J 29, Draken, Viggen a nyní Gripen E/F.' }
   },
   {
     type: 'sound',
-    q:    { en: 'Listen to the engine sound. Which aircraft does it belong to?',
-            cs: 'Poslechněte si zvuk motoru. Kterému letadlu patří?' },
-    opts: { en: ['Spitfire (Merlin)','Hurricane','Typhoon Mk.I','Bf 109'],
-            cs: ['Spitfire (Merlin)','Hurricane','Typhoon Mk.I','Bf 109'] },
+    q:    { en: 'This piston engine roar belongs to a legendary WW2 aircraft. Which one?',
+            cs: 'Tento zvuk pístového motoru patří legendárnímu letounu 2. sv. války. Kterému?' },
+    opts: { en: ['Spitfire (Rolls-Royce Merlin)','de Havilland Mosquito','P-51 Mustang (Allison)','Bf 109 E'],
+            cs: ['Spitfire (Rolls-Royce Merlin)','de Havilland Mosquito','P-51 Mustang (Allison)','Bf 109 E'] },
     ans: 0,
-    soundSrc: 'assets/nation/cz/SPITFIRE.mp3',            /* ← replace */
-    fact: { en: 'Replace this with a real fact.',
-            cs: 'Nahraďte skutečným faktem.' }
+    soundSrc: 'assets/nation/cz/SPITFIRE.mp3',
+    fact: { en: 'The Merlin engine powered both the Spitfire and Hurricane — and also the Lancaster bomber and the best variants of the P-51 Mustang.',
+            cs: 'Motor Merlin pohání jak Spitfire a Hurricane — tak i bombardér Lancaster a nejlepší varianty P-51 Mustangu.' }
+  },
+  {
+    type: 'sound',
+    q:    { en: 'This is the engine of a trainer used by over 30 air forces. Which aircraft?',
+            cs: 'Toto je motor cvičného letounu používaného více než 30 letectvy. Který letoun?' },
+    opts: { en: ['Aero L-39 Albatros','BAe Hawk','MB-339','T-38 Talon'],
+            cs: ['Aero L-39 Albatros','BAe Hawk','MB-339','T-38 Talon'] },
+    ans: 0,
+    soundSrc: 'assets/nation/cz/L39_ALBATROS.mp3',
+    fact: { en: 'The L-39 Albatros became the standard jet trainer for Warsaw Pact nations — its simplicity and reliability are legendary.',
+            cs: 'L-39 Albatros se stal standardním proudovým cvičným letounem zemí Varšavského paktu — jeho spolehlivost je legendární.' }
   },
 
   /* ══════════════════════════════════════════════════════════════
      ✈  SILHOUETTE — 10 visual identification questions
-        imgSrc:  path to PNG/JPG  ← preferred, easy to swap
-        svgPath: inline SVG path  ← fallback
      ══════════════════════════════════════════════════════════════ */
   {
     type: 'silhouette',
     q:    { en: 'Identify this aircraft from its silhouette:',
             cs: 'Identifikujte letoun podle siluety:' },
-    opts: { en: ['Spitfire Mk.IX','Hurricane Mk.I','P-51 Mustang','Fw 190'],
-            cs: ['Spitfire Mk.IX','Hurricane Mk.I','P-51 Mustang','Fw 190'] },
+    opts: { en: ['Supermarine Spitfire','Hurricane Mk.I','P-51 Mustang','Bf 109 E'],
+            cs: ['Supermarine Spitfire','Hurricane Mk.I','P-51 Mustang','Bf 109 E'] },
     ans: 0,
-    /* imgSrc: 'assets/silhouettes/spitfire.png', */
     svgPath: 'M 150,75 C 130,65 90,70 60,72 L 40,75 L 60,78 C 90,80 130,85 150,75 Z M 150,75 C 170,60 230,55 260,60 L 270,65 L 265,68 C 240,68 180,72 150,75 Z M 150,75 L 145,55 C 143,45 148,38 150,35 C 152,38 157,45 155,55 Z M 150,75 L 148,95 L 152,95 L 150,75 Z M 160,72 L 165,58 L 168,60 L 163,74 Z',
-    fact: { en: 'The Spitfire\'s elliptical wings are unique — a design that delivered superior aerodynamic efficiency.',
-            cs: 'Eliptická křídla Spitfiru jsou unikátní a poskytla mu vynikající aerodynamiku.' }
+    fact: { en: 'The Spitfire\'s elliptical wings are instantly recognisable — a unique shape that delivered exceptional aerodynamic efficiency.',
+            cs: 'Eliptická křídla Spitfiru jsou okamžitě rozpoznatelná — unikátní tvar s výjimečnou aerodynamickou účinností.' }
   },
   {
     type: 'silhouette',
     q:    { en: 'Identify this aircraft from its silhouette:',
             cs: 'Identifikujte letoun podle siluety:' },
-    opts: { en: ['F-14 Tomcat','F-15 Eagle','F-111','Tornado IDS'],
-            cs: ['F-14 Tomcat','F-15 Eagle','F-111','Tornado IDS'] },
+    opts: { en: ['Eurofighter Typhoon','Dassault Rafale','SAAB J 35 Draken','Mirage 2000'],
+            cs: ['Eurofighter Typhoon','Dassault Rafale','SAAB J 35 Draken','Mirage 2000'] },
     ans: 0,
-    /* imgSrc: 'assets/silhouettes/f14.png', */
-    svgPath: 'M 150,75 C 120,55 70,52 50,58 L 40,62 C 60,64 100,68 130,72 L 150,75 Z M 150,75 C 180,55 230,52 250,58 L 260,62 C 240,64 200,68 170,72 L 150,75 Z M 150,75 L 145,40 C 144,30 150,22 150,22 C 150,22 156,30 155,40 Z M 148,88 L 140,105 L 144,107 L 150,92 L 156,107 L 160,105 L 152,88 Z M 125,70 L 105,62 L 108,64 L 128,72 Z M 175,70 L 195,62 L 192,64 L 172,72 Z',
-    fact: { en: 'The F-14 Tomcat\'s variable-sweep wings could fold back for carrier storage or extend for low-speed flight.',
-            cs: 'Křídla F-14 Tomcat s proměnlivou geometrií se dala sklopit pro uložení nebo roztáhnout pro pomalý let.' }
+    svgPath: 'M 150,78 C 135,62 100,52 78,55 L 65,60 L 72,65 C 100,62 132,70 149,76 Z M 150,78 C 165,62 200,52 222,55 L 235,60 L 228,65 C 200,62 168,70 151,76 Z M 150,78 L 147,46 L 153,46 Z M 136,65 L 110,54 L 113,57 L 139,67 Z M 164,65 L 190,54 L 187,57 L 161,67 Z',
+    fact: { en: 'The Eurofighter Typhoon\'s canard-delta layout is distinctive — the small front fins (canards) are the key identifier.',
+            cs: 'Konfigurace canard-delta Eurofighter Typhoonu je charakteristická — malé přední plošky (canards) jsou klíčovým identifikátorem.' }
   },
   {
     type: 'silhouette',
     q:    { en: 'Identify this aircraft from its silhouette:',
             cs: 'Identifikujte letoun podle siluety:' },
-    opts: { en: ['B-2 Spirit','B-1 Lancer','F-117 Nighthawk','YB-49'],
-            cs: ['B-2 Spirit','B-1 Lancer','F-117 Nighthawk','YB-49'] },
+    opts: { en: ['SAAB J 35 Draken','Mirage 2000','Saab Gripen','F-35 Lightning II'],
+            cs: ['SAAB J 35 Draken','Mirage 2000','Saab Gripen','F-35 Lightning II'] },
     ans: 0,
-    /* imgSrc: 'assets/silhouettes/b2.png', */
-    svgPath: 'M 150,80 L 60,90 L 50,85 L 60,82 L 140,75 L 150,72 L 160,75 L 240,82 L 250,85 L 240,90 Z M 150,72 L 145,65 L 150,60 L 155,65 Z',
-    fact: { en: 'The B-2 Spirit flying wing has no fuselage or tail — its entire shape is the wing itself.',
-            cs: 'Létající křídlo B-2 Spirit nemá trup ani ocas — celý jeho tvar tvoří křídlo.' }
-  },
-  {
-    type: 'silhouette',
-    q:    { en: 'Identify this aircraft from its silhouette:',
-            cs: 'Identifikujte letoun podle siluety:' },
-    opts: { en: ['F-22 Raptor','Su-57','Eurofighter Typhoon','F-35 Lightning II'],
-            cs: ['F-22 Raptor','Su-57','Eurofighter Typhoon','F-35 Lightning II'] },
-    ans: 0,
-    /* imgSrc: 'assets/silhouettes/f22.png', */
-    svgPath: 'M 150,75 C 140,60 120,50 95,48 L 80,50 L 85,55 C 105,56 130,65 148,73 L 150,75 Z M 150,75 C 160,60 180,50 205,48 L 220,50 L 215,55 C 195,56 170,65 152,73 L 150,75 Z M 150,75 L 147,45 C 146,35 150,28 150,28 C 150,28 154,35 153,45 Z M 148,88 L 142,100 L 146,102 L 150,92 L 154,102 L 158,100 L 152,88 Z M 130,68 L 115,55 L 118,57 L 133,70 Z M 170,68 L 185,55 L 182,57 L 167,70 Z',
-    fact: { en: 'The F-22 combines supercruise, supermaneuverability, and stealth — the defining 5th-generation combination.',
-            cs: 'F-22 kombinuje supercruise, supermanévrovatelnost a stealth — definující znaky 5. generace.' }
+    svgPath: 'M 150,75 C 125,58 75,52 48,56 L 35,62 L 48,66 C 80,62 128,68 149,73 Z M 150,75 C 175,58 225,52 252,56 L 265,62 L 252,66 C 220,62 172,68 151,73 Z M 150,75 L 146,40 C 145,30 150,22 150,22 C 150,22 155,30 154,40 Z M 148,88 L 140,108 L 144,110 L 150,92 L 156,110 L 160,108 L 152,88 Z M 118,66 L 95,54 L 98,57 L 121,69 Z M 182,66 L 205,54 L 202,57 L 179,69 Z',
+    fact: { en: 'The J 35 Draken\'s double-delta wing — a large outer delta with a smaller inner delta — is one of the most distinctive shapes in jet aviation.',
+            cs: 'Dvojité delta křídlo J 35 Draken — velké vnější delta s menším vnitřním — je jedním z nejcharakterističtějších tvarů v tryskové aviatice.' }
   },
   {
     type: 'silhouette',
@@ -675,34 +710,20 @@ const QUESTIONS_ALL = [
     opts: { en: ['MiG-21','MiG-29','Su-27','F-104 Starfighter'],
             cs: ['MiG-21','MiG-29','Su-27','F-104 Starfighter'] },
     ans: 0,
-    /* imgSrc: 'assets/silhouettes/mig21.png', */
     svgPath: 'M 150,75 C 145,65 125,55 100,50 L 85,52 L 90,57 C 112,57 138,68 149,74 Z M 150,75 C 155,65 175,55 200,50 L 215,52 L 210,57 C 188,57 162,68 151,74 Z M 150,75 L 147,42 L 153,42 Z M 150,75 L 147,92 L 153,92 Z',
-    fact: { en: 'The MiG-21 is the most produced supersonic jet in history, serving in over 50 air forces worldwide.',
-            cs: 'MiG-21 je nejprodukovanější nadzvukové proudové letadlo v historii — sloužilo u více než 50 letectev.' }
+    fact: { en: 'The MiG-21\'s tailed-delta layout is instantly recognisable — a needle-nosed dart with a round intake and small triangular wings.',
+            cs: 'Ocas-delta uspořádání MiGu-21 je okamžitě rozpoznatelné — malý letoun s jehlovou špičkou a malými trojúhelníkovými křídly.' }
   },
   {
     type: 'silhouette',
     q:    { en: 'Identify this aircraft from its silhouette:',
             cs: 'Identifikujte letoun podle siluety:' },
-    opts: { en: ['SR-71 Blackbird','U-2 Dragon Lady','A-12 Oxcart','TR-1'],
-            cs: ['SR-71 Blackbird','U-2 Dragon Lady','A-12 Oxcart','TR-1'] },
+    opts: { en: ['F-35 Lightning II','F-22 Raptor','F/A-18 Hornet','Eurofighter Typhoon'],
+            cs: ['F-35 Lightning II','F-22 Raptor','F/A-18 Hornet','Eurofighter Typhoon'] },
     ans: 0,
-    /* imgSrc: 'assets/silhouettes/sr71.png', */
-    svgPath: 'M 150,75 C 120,70 60,72 30,74 L 20,76 L 35,78 C 70,76 125,77 150,75 Z M 150,75 C 180,70 240,72 270,74 L 280,76 L 265,78 C 230,76 175,77 150,75 Z M 150,75 L 147,55 L 148,42 L 150,38 L 152,42 L 153,55 Z M 150,75 L 148,90 L 149,96 L 151,96 L 152,90 Z',
-    fact: { en: 'The SR-71 was so fast it could outrun surface-to-air missiles — its evasion was simply to accelerate.',
-            cs: 'SR-71 byl tak rychlý, že dokázal utéct raketám — standardním únikovým manévrem bylo zrychlení.' }
-  },
-  {
-    type: 'silhouette',
-    q:    { en: 'Identify this aircraft from its silhouette:',
-            cs: 'Identifikujte letoun podle siluety:' },
-    opts: { en: ['A-10 Thunderbolt II','Su-25 Frogfoot','Il-2 Shturmovik','Harrier GR1'],
-            cs: ['A-10 Thunderbolt II','Su-25 Frogfoot','Il-2 Šturmovik','Harrier GR1'] },
-    ans: 0,
-    /* imgSrc: 'assets/silhouettes/a10.png', */
-    svgPath: 'M 150,75 C 128,68 85,65 55,67 L 40,70 L 55,73 C 90,71 130,72 150,75 Z M 150,75 C 172,68 215,65 245,67 L 260,70 L 245,73 C 210,71 170,72 150,75 Z M 150,75 L 148,50 L 152,50 Z M 150,78 L 140,96 L 142,98 L 150,82 L 158,98 L 160,96 Z M 60,70 L 50,60 L 52,62 L 62,72 Z M 240,70 L 250,60 L 248,62 L 238,72 Z',
-    fact: { en: 'The A-10\'s twin engines sit high on the rear fuselage, away from ground debris — ideal for low-level CAS.',
-            cs: 'Dva motory A-10 jsou vysoko na zadním trupu, daleko od sutin — ideální pro nízkoúrovňovou leteckou podporu.' }
+    svgPath: 'M 150,76 C 136,64 108,56 86,58 L 74,62 L 80,67 C 105,64 135,71 149,75 Z M 150,76 C 164,64 192,56 214,58 L 226,62 L 220,67 C 195,64 165,71 151,75 Z M 150,76 L 148,48 L 152,48 Z M 150,79 L 146,96 L 150,98 L 154,96 Z',
+    fact: { en: 'The F-35\'s distinctive single-engine chubby fuselage and DSI intake set it apart from all other stealth fighters.',
+            cs: 'Charakteristický jednomotorový zakulacený trup a vstup DSI odlišují F-35 od všech ostatních stealth stíhaček.' }
   },
   {
     type: 'silhouette',
@@ -711,34 +732,53 @@ const QUESTIONS_ALL = [
     opts: { en: ['P-51 Mustang','Fw 190','Bf 109','Hawker Tempest'],
             cs: ['P-51 Mustang','Fw 190','Bf 109','Hawker Tempest'] },
     ans: 0,
-    /* imgSrc: 'assets/silhouettes/p51.png', */
     svgPath: 'M 150,75 C 132,68 95,70 68,72 L 50,74 L 68,77 C 98,75 134,76 150,75 Z M 150,75 C 168,68 205,70 232,72 L 250,74 L 232,77 C 202,75 166,76 150,75 Z M 150,75 L 148,48 C 147,40 150,34 150,34 C 150,34 153,40 152,48 Z M 150,78 L 148,94 L 152,94 Z',
-    fact: { en: 'The P-51\'s exceptional range — thanks to drop tanks — allowed it to escort bombers deep into Germany.',
-            cs: 'Výjimečný dolet P-51 díky přídavným nádržím umožnil doprovázet bombardéry hluboko do Německa.' }
+    fact: { en: 'The P-51D Mustang\'s teardrop canopy and sleek shape are recognisable — a beautiful design that also happened to be very fast.',
+            cs: 'Kapkový kryt kokpitu a aerodynamický tvar P-51D Mustangu ho dělají rozpoznatelným — krásný design, který byl navíc velmi rychlý.' }
   },
   {
     type: 'silhouette',
     q:    { en: 'Identify this aircraft from its silhouette:',
             cs: 'Identifikujte letoun podle siluety:' },
-    opts: { en: ['Eurofighter Typhoon','Dassault Rafale','SAAB Draken','Mirage 2000'],
-            cs: ['Eurofighter Typhoon','Dassault Rafale','SAAB Draken','Mirage 2000'] },
+    opts: { en: ['Mitsubishi A6M Zero','Ki-43 Hayabusa','A7M Reppu','N1K Shiden'],
+            cs: ['Mitsubishi A6M Zero','Ki-43 Hayabusa','A7M Reppu','N1K Shiden'] },
     ans: 0,
-    /* imgSrc: 'assets/silhouettes/eurofighter.png', */
-    svgPath: 'M 150,78 C 135,62 100,52 78,55 L 65,60 L 72,65 C 100,62 132,70 149,76 Z M 150,78 C 165,62 200,52 222,55 L 235,60 L 228,65 C 200,62 168,70 151,76 Z M 150,78 L 147,46 L 153,46 Z M 136,65 L 110,54 L 113,57 L 139,67 Z M 164,65 L 190,54 L 187,57 L 161,67 Z',
-    fact: { en: 'The Eurofighter Typhoon\'s delta-canard gives outstanding agility — capable of 9g sustained turns.',
-            cs: 'Konfigurace delta-canard Eurofighter Typhoonu zajišťuje vynikající obratnost při 9g zatáčkách.' }
+    svgPath: 'M 150,75 C 128,67 88,68 62,70 L 44,73 L 62,77 C 92,75 130,76 150,75 Z M 150,75 C 172,67 212,68 238,70 L 256,73 L 238,77 C 208,75 170,76 150,75 Z M 150,75 L 148,50 C 147,42 150,36 150,36 C 150,36 153,42 152,50 Z M 150,78 L 147,93 L 153,93 Z M 70,72 L 58,60 L 60,62 L 72,74 Z M 230,72 L 242,60 L 240,62 L 228,74 Z',
+    fact: { en: 'The A6M Zero\'s round cowling, long canopy, and gull-like wings made it distinctive — and feared — throughout the Pacific in 1941-42.',
+            cs: 'Kulatý kryt motoru, dlouhý kryt kokpitu a racčí křídla A6M Zero ho dělala charakteristickým — a obávaným — v Pacifiku v letech 1941-42.' }
   },
   {
     type: 'silhouette',
     q:    { en: 'Identify this aircraft from its silhouette:',
             cs: 'Identifikujte letoun podle siluety:' },
-    opts: { en: ['F-35 Lightning II','F-117 Nighthawk','X-47B','YF-23'],
-            cs: ['F-35 Lightning II','F-117 Nighthawk','X-47B','YF-23'] },
+    opts: { en: ['MiG-29 Fulcrum','Su-27 Flanker','F-15 Eagle','F/A-18 Hornet'],
+            cs: ['MiG-29 Fulcrum','Su-27 Flanker','F-15 Eagle','F/A-18 Hornet'] },
     ans: 0,
-    /* imgSrc: 'assets/silhouettes/f35.png', */
-    svgPath: 'M 150,76 C 136,64 108,56 86,58 L 74,62 L 80,67 C 105,64 135,71 149,75 Z M 150,76 C 164,64 192,56 214,58 L 226,62 L 220,67 C 195,64 165,71 151,75 Z M 150,76 L 148,48 L 152,48 Z M 150,79 L 146,96 L 150,98 L 154,96 Z',
-    fact: { en: 'The F-35 Lightning II is the most produced 5th-generation fighter, with over 1,000 delivered to 18 nations.',
-            cs: 'F-35 Lightning II je nejprodukovanější stíhač 5. generace s více než 1 000 dodanými kusy do 18 zemí.' }
+    svgPath: 'M 150,73 C 130,58 88,52 62,55 L 48,60 L 56,65 C 85,62 130,67 149,72 Z M 150,73 C 170,58 212,52 238,55 L 252,60 L 244,65 C 215,62 170,67 151,72 Z M 150,73 L 147,42 C 146,32 150,24 150,24 C 150,24 154,32 153,42 Z M 145,82 L 136,100 L 140,102 L 150,86 L 160,102 L 164,100 L 155,82 Z M 105,64 L 85,52 L 88,55 L 108,67 Z M 195,64 L 215,52 L 212,55 L 192,67 Z',
+    fact: { en: 'The MiG-29\'s twin-engine layout with widely-spaced nacelles and blended wing-body is instantly recognisable.',
+            cs: 'Dvoumotorové uspořádání MiGu-29 s rozmístěnými gondolami motorů a splývajícím tělesem křídla je okamžitě rozpoznatelné.' }
+  },
+  {
+    type: 'silhouette',
+    q:    { en: 'Identify this aircraft from its silhouette:',
+            cs: 'Identifikujte letoun podle siluety:' },
+    opts: { en: ['Dassault Rafale','Eurofighter Typhoon','Mirage 2000','JAS 39 Gripen'],
+            cs: ['Dassault Rafale','Eurofighter Typhoon','Mirage 2000','JAS 39 Gripen'] },
+    ans: 0,
+    svgPath: 'M 150,77 C 134,63 102,54 80,57 L 67,62 L 73,67 C 102,64 135,71 149,76 Z M 150,77 C 166,63 198,54 220,57 L 233,62 L 227,67 C 198,64 165,71 151,76 Z M 150,77 L 147,47 L 153,47 Z M 142,65 L 120,56 L 122,58 L 144,67 Z M 158,65 L 180,56 L 178,58 L 156,67 Z M 148,88 L 144,102 L 150,104 L 156,102 L 152,88 Z',
+    fact: { en: 'The Rafale\'s ogival delta-canard with slightly larger canards than the Typhoon distinguishes it — plus its single-seat front cockpit design.',
+            cs: 'Rafale se odlišuje ogivální delta-canard s mírně většími canards než Typhoon — plus přední jednomístný kokpit.' }
+  },
+  {
+    type: 'silhouette',
+    q:    { en: 'Identify this aircraft from its silhouette:',
+            cs: 'Identifikujte letoun podle siluety:' },
+    opts: { en: ['F-104 Starfighter','F-100 Super Sabre','F-86 Sabre','F-4 Phantom II'],
+            cs: ['F-104 Starfighter','F-100 Super Sabre','F-86 Sabre','F-4 Phantom II'] },
+    ans: 0,
+    svgPath: 'M 150,75 C 140,72 110,73 80,74 L 55,75 L 80,76 C 115,76 142,77 150,75 Z M 150,75 C 160,72 190,73 220,74 L 245,75 L 220,76 C 185,76 158,77 150,75 Z M 150,75 L 148,44 L 152,44 Z M 150,78 L 148,95 L 152,95 Z',
+    fact: { en: 'The F-104 Starfighter\'s tiny razor-sharp wings are unmistakeable — so thin that ground crew wore padded gloves to avoid cuts.',
+            cs: 'Miniaturní ostře tvarovaná křídla F-104 Starfighter jsou nezaměnitelná — tak tenká, že pozemní posádka nosila polstrované rukavice.' }
   }
 
 ]; /* ═══ END QUESTIONS_ALL ═══ */
@@ -768,8 +808,7 @@ function getCookie(name) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   PERSONAL HISTORY — stored in cookie "aero_history"
-   Structure: { callsign, plays:[], bestScore, lastPlayedDate, totalPlays }
+   PERSONAL HISTORY
    ───────────────────────────────────────────────────────────────────── */
 function getHistory() {
   return getCookie('aero_history') || { callsign:'', plays:[], bestScore:0, lastPlayedDate:null, totalPlays:0 };
@@ -785,7 +824,7 @@ function recordPlay(name, score, correct, accuracy, mode) {
   h.lastPlayedDate = today;
   h.plays = h.plays || [];
   h.plays.push({ score, correct, accuracy, mode, date: today, ts: Date.now() });
-  if (h.plays.length > 50) h.plays = h.plays.slice(-50); // keep last 50
+  if (h.plays.length > 50) h.plays = h.plays.slice(-50);
   saveHistory(h);
   return h;
 }
@@ -796,118 +835,53 @@ function recordPlay(name, score, correct, accuracy, mode) {
 function getHomeMotivation(lang) {
   const h = getHistory();
   if (!h.totalPlays || h.totalPlays === 0) return null;
-
   const today = new Date().toISOString().slice(0,10);
   const playsToday = (h.plays || []).filter(p => p.date === today).length;
   const best = h.bestScore || 0;
   const lastAcc = h.plays && h.plays.length ? h.plays[h.plays.length-1].accuracy : null;
   const name = h.callsign || '';
-
-  // Returning after long absence (> 7 days)
   if (h.lastPlayedDate && h.lastPlayedDate < new Date(Date.now() - 7*864e5).toISOString().slice(0,10)) {
-    return {
-      type: 'info',
-      label: lang==='en' ? 'Welcome back' : 'Vítejte zpět',
-      text: lang==='en'
-        ? `Good to see you again${name?' '+name:''}! Your personal best is ${best} pts. Can you beat it today?`
-        : `Vítejte zpět${name?' '+name:''}! Váš osobní rekord je ${best} bodů. Dokážete ho dnes překonat?`
-    };
+    return { type:'info', label:lang==='en'?'Welcome back':'Vítejte zpět',
+      text:lang==='en'?`Good to see you again${name?' '+name:''}! Your personal best is ${best} pts. Can you beat it today?`
+                      :`Vítejte zpět${name?' '+name:''}! Váš osobní rekord je ${best} bodů. Dokážete ho dnes překonat?` };
   }
-
-  // Played 3+ times today
   if (playsToday >= 3) {
-    return {
-      type: 'info',
-      label: lang==='en' ? 'Persistence' : 'Vytrvalost',
-      text: lang==='en'
-        ? `${playsToday} flights today${name?' '+name:''}. True pilots don't give up — one more run?`
-        : `${playsToday} letů dnes${name?' '+name:''}. Skuteční piloti se nevzdávají — ještě jeden pokus?`
-    };
+    return { type:'info', label:lang==='en'?'Persistence':'Vytrvalost',
+      text:lang==='en'?`${playsToday} flights today${name?' '+name:''}. True pilots don't give up — one more run?`
+                      :`${playsToday} letů dnes${name?' '+name:''}. Skuteční piloti se nevzdávají — ještě jeden pokus?` };
   }
-
-  // Last accuracy was poor
   if (lastAcc !== null && lastAcc < 40) {
-    return {
-      type: 'challenge',
-      label: lang==='en' ? 'Challenge' : 'Výzva',
-      text: lang==='en'
-        ? `Your last run was tough. ${lastAcc}% accuracy — think you can crack 60% this time?`
-        : `Poslední pokus byl těžký. ${lastAcc}% přesnost — myslíte, že tentokrát překonáte 60%?`
-    };
+    return { type:'challenge', label:lang==='en'?'Challenge':'Výzva',
+      text:lang==='en'?`Your last run was tough. ${lastAcc}% accuracy — think you can crack 60% this time?`
+                      :`Poslední pokus byl těžký. ${lastAcc}% přesnost — myslíte, že tentokrát překonáte 60%?` };
   }
-
-  // Good last run, encourage to beat personal best
   if (best > 0) {
-    return {
-      type: 'challenge',
-      label: lang==='en' ? 'Personal best' : 'Osobní rekord',
-      text: lang==='en'
-        ? `Your personal best is ${best} pts. Ready to break it today?`
-        : `Váš osobní rekord je ${best} bodů. Jste připraveni ho dnes překonat?`
-    };
+    return { type:'challenge', label:lang==='en'?'Personal best':'Osobní rekord',
+      text:lang==='en'?`Your personal best is ${best} pts. Ready to break it today?`
+                      :`Váš osobní rekord je ${best} bodů. Jste připraveni ho dnes překonat?` };
   }
-
   return null;
 }
 
 function getPostGameMotivation(score, correct, accuracy, history, lang) {
   const plays = history.plays || [];
   const prevBest = plays.length > 1 ? Math.max(...plays.slice(0,-1).map(p=>p.score)) : 0;
-  const msgs = [];
-
-  // Perfect score
-  if (correct === 10) {
-    msgs.push({
-      type: 'praise',
-      label: lang==='en' ? '🏆 Perfect score' : '🏆 Perfektní skóre',
-      text: lang==='en'
-        ? 'Flawless. 10/10. You have the knowledge of a test pilot. The leaderboard is yours.'
-        : 'Bezchybně. 10/10. Máte znalosti zkušebního pilota. Žebříček je váš.'
-    });
-  }
-  // New personal best
-  else if (score > prevBest && prevBest > 0) {
-    msgs.push({
-      type: 'praise',
-      label: lang==='en' ? '↑ New personal best' : '↑ Nový osobní rekord',
-      text: lang==='en'
-        ? `${score} pts — a new personal best! You've improved by ${score - prevBest} pts.`
-        : `${score} bodů — nový osobní rekord! Zlepšili jste se o ${score - prevBest} bodů.`
-    });
-  }
-  // Below personal best
-  else if (prevBest > 0 && score < prevBest) {
-    const gap = prevBest - score;
-    msgs.push({
-      type: 'challenge',
-      label: lang==='en' ? 'You can do better' : 'Můžete lépe',
-      text: lang==='en'
-        ? `You're ${gap} pts below your personal best of ${prevBest}. Maybe you can do it better today?`
-        : `Jste ${gap} bodů pod svým osobním rekordem ${prevBest}. Možná to dnes zvládnete lépe?`
-    });
-  }
-  // Low accuracy
-  else if (accuracy < 50) {
-    msgs.push({
-      type: 'challenge',
-      label: lang==='en' ? 'Keep training' : 'Trénujte dál',
-      text: lang==='en'
-        ? `${accuracy}% accuracy. Every ace started as a cadet. Try again — you'll get there.`
-        : `${accuracy}% přesnost. Každé eso začínalo jako kadet. Zkuste to znovu — dostanete se tam.`
-    });
-  }
-  // First ever play
-  else if (plays.length === 1) {
-    msgs.push({
-      type: 'info',
-      label: lang==='en' ? 'First flight' : 'První let',
-      text: lang==='en'
-        ? `First flight logged! ${score} pts. Come back tomorrow to beat your personal best.`
-        : `První let zaznamenán! ${score} bodů. Vraťte se zítra a překonejte svůj osobní rekord.`
-    });
-  }
-
-  return msgs[0] || null;
+  if (correct === 10) return { type:'praise', label:lang==='en'?'🏆 Perfect score':'🏆 Perfektní skóre',
+    text:lang==='en'?'Flawless. 10/10. You have the knowledge of a test pilot. The leaderboard is yours.'
+                    :'Bezchybně. 10/10. Máte znalosti zkušebního pilota. Žebříček je váš.' };
+  if (score > prevBest && prevBest > 0) return { type:'praise', label:lang==='en'?'↑ New personal best':'↑ Nový osobní rekord',
+    text:lang==='en'?`${score} pts — a new personal best! You've improved by ${score - prevBest} pts.`
+                    :`${score} bodů — nový osobní rekord! Zlepšili jste se o ${score - prevBest} bodů.` };
+  if (prevBest > 0 && score < prevBest) return { type:'challenge', label:lang==='en'?'You can do better':'Můžete lépe',
+    text:lang==='en'?`You're ${prevBest - score} pts below your personal best of ${prevBest}. One more try?`
+                    :`Jste ${prevBest - score} bodů pod svým rekordem ${prevBest}. Ještě jeden pokus?` };
+  if (accuracy < 50) return { type:'challenge', label:lang==='en'?'Keep training':'Trénujte dál',
+    text:lang==='en'?`${accuracy}% accuracy. Every ace started as a cadet. Try again — you'll get there.`
+                    :`${accuracy}% přesnost. Každé eso začínalo jako kadet. Zkuste znovu — dostanete se tam.` };
+  if (plays.length === 1) return { type:'info', label:lang==='en'?'First flight':'První let',
+    text:lang==='en'?`First flight logged! ${score} pts. Come back tomorrow to beat your personal best.`
+                    :`První let zaznamenán! ${score} bodů. Vraťte se zítra a překonejte svůj osobní rekord.` };
+  return null;
 }
 
 /* ─────────────────────────────────────────────────────────────────────
@@ -923,19 +897,15 @@ let quizAudio     = null, lastEntry = null;
 let quizStartTime = 0, totalSeconds = 0;
 
 /* ─────────────────────────────────────────────────────────────────────
-   PHP/MySQL LEADERBOARD
+   LEADERBOARD — PHP/MySQL backend
    ───────────────────────────────────────────────────────────────────── */
 const sbConfigured = API_URL !== '';
 
 async function loadGlobalScores() {
   if (sbConfigured) {
     try {
-      const r = await fetch(API_URL + '?action=scores',
-        { signal: AbortSignal.timeout(5000) });
-      if (r.ok) {
-        const data = await r.json();
-        if (Array.isArray(data)) return data;
-      }
+      const r = await fetch(API_URL + '?action=scores', { signal: AbortSignal.timeout(5000) });
+      if (r.ok) { const data = await r.json(); if (Array.isArray(data)) return data; }
     } catch {}
   }
   return JSON.parse(localStorage.getItem('aero_scores') || '[]');
@@ -943,20 +913,13 @@ async function loadGlobalScores() {
 
 async function saveGlobalScore(entry) {
   const local = JSON.parse(localStorage.getItem('aero_scores') || '[]');
-  local.push(entry);
-  local.sort((a, b) => b.score - a.score);
-  localStorage.setItem('aero_scores', JSON.stringify(local.slice(0, 50)));
-
+  local.push(entry); local.sort((a,b)=>b.score-a.score);
+  localStorage.setItem('aero_scores', JSON.stringify(local.slice(0,50)));
   if (!sbConfigured) return;
-
   try {
-    await fetch(API_URL + '?action=save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(entry),
-      signal: AbortSignal.timeout(6000)
-    });
-  } catch { /* uloženo lokálně výše */ }
+    await fetch(API_URL + '?action=save', { method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(entry), signal:AbortSignal.timeout(6000) });
+  } catch {}
 }
 
 /* ─────────────────────────────────────────────────────────────────────
@@ -991,12 +954,12 @@ function updateDynamicQuizText() {
   const q = questions[qIdx]; if (!q) return;
   document.getElementById('q-text').textContent = q.q[currentLang];
   const badge = document.getElementById('q-type-badge');
-  badge.textContent = q.type==='sound' ? (currentLang==='en'?'Sound ID':'Identifikace zvuku')
-    : q.type==='silhouette' ? (currentLang==='en'?'Silhouette':'Silueta')
-    : (currentLang==='en'?'Trivia':'Znalosti');
+  badge.textContent = q.type==='sound'?(currentLang==='en'?'Sound ID':'Identifikace zvuku')
+    :q.type==='silhouette'?(currentLang==='en'?'Silhouette':'Silueta')
+    :(currentLang==='en'?'Trivia':'Znalosti');
   const lbl = document.getElementById('sound-btn-label');
   const playing = document.getElementById('sound-btn').classList.contains('playing');
-  if (lbl) lbl.textContent = playing ? (currentLang==='en'?'Stop':'Zastavit') : (currentLang==='en'?'Play Engine Sound':'Přehrát zvuk motoru');
+  if (lbl) lbl.textContent = playing?(currentLang==='en'?'Stop':'Zastavit'):(currentLang==='en'?'Play Engine Sound':'Přehrát zvuk motoru');
   document.querySelectorAll('.ans-btn').forEach((btn,i) => {
     if (!btn.classList.contains('disabled'))
       btn.innerHTML = `<span class="ans-letter">${'ABCD'[i]}</span>${q.opts[currentLang][i]}`;
@@ -1063,9 +1026,9 @@ function renderQuestion() {
   document.getElementById('feedback-row').innerHTML     = '';
 
   const badge = document.getElementById('q-type-badge');
-  badge.textContent = q.type==='sound' ? (currentLang==='en'?'Sound ID':'Identifikace zvuku')
-    : q.type==='silhouette' ? (currentLang==='en'?'Silhouette':'Silueta')
-    : (currentLang==='en'?'Trivia':'Znalosti');
+  badge.textContent = q.type==='sound'?(currentLang==='en'?'Sound ID':'Identifikace zvuku')
+    :q.type==='silhouette'?(currentLang==='en'?'Silhouette':'Silueta')
+    :(currentLang==='en'?'Trivia':'Znalosti');
   badge.className = 'q-type-badge '+(q.type==='sound'?'badge-sound':q.type==='silhouette'?'badge-silhouette':'badge-trivia');
 
   document.getElementById('silhouette-area').style.display = q.type==='silhouette'?'block':'none';
@@ -1131,7 +1094,6 @@ function selectAnswer(idx) {
   const isCorrect = idx===q.ans;
   btns[idx].classList.add(isCorrect?'correct':'wrong');
   if (!isCorrect) btns[q.ans].classList.add('correct');
-
   if (isCorrect) {
     correct++; streak++; if (streak>bestStreak) bestStreak=streak;
     const pts = 100 + Math.round(timeLeft*10) + (streak>1?(streak-1)*25:0);
@@ -1158,17 +1120,13 @@ function disableAnswers() {
   document.querySelectorAll('.ans-btn').forEach(b => { b.classList.add('disabled'); b.onclick=null; });
 }
 
-function nextQuestion() {
-  stopQuizAudio(); qIdx++;
-  if (qIdx>=10) finishQuiz(); else renderQuestion();
-}
+function nextQuestion() { stopQuizAudio(); qIdx++; if (qIdx>=10) finishQuiz(); else renderQuestion(); }
 
 function finishQuiz() {
   document.getElementById('progress-fill').style.width='100%';
   totalSeconds = Math.round((Date.now()-quizStartTime)/1000);
   const acc  = Math.round((correct/10)*100);
   const rank = RANKS.find(r => acc>=r.min && acc<=r.max) || RANKS[0];
-
   document.getElementById('final-score').textContent = score;
   document.getElementById('rank-badge').textContent  = rank.title[currentLang];
   document.getElementById('rank-desc').textContent   = rank.desc[currentLang];
@@ -1176,23 +1134,13 @@ function finishQuiz() {
   document.getElementById('rb-acc').textContent      = acc+'%';
   document.getElementById('rb-time').textContent     = totalSeconds+'s';
   document.getElementById('rb-streak').textContent   = bestStreak;
-
-  // Save to cookie history
   const history = recordPlay(pilotName, score, correct, acc, mode);
-
-  // Post-game motivation
   const pmsg = getPostGameMotivation(score, correct, acc, history, currentLang);
   const wrap = document.getElementById('postgame-msg-wrap');
-  if (pmsg) {
-    wrap.innerHTML = `<div class="postgame-msg type-${pmsg.type}"><div class="pm-label">${pmsg.label}</div>${pmsg.text}</div>`;
-  } else { wrap.innerHTML=''; }
-
-  // Save to leaderboard
-  lastEntry = {
-    name: pilotName, score, correct, total:10, accuracy:acc,
-    best_streak:bestStreak, time_seconds:totalSeconds, mode,
-    date: new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'})
-  };
+  if (pmsg) wrap.innerHTML = `<div class="postgame-msg type-${pmsg.type}"><div class="pm-label">${pmsg.label}</div>${pmsg.text}</div>`;
+  else wrap.innerHTML='';
+  lastEntry = { name:pilotName, score, correct, total:10, accuracy:acc, best_streak:bestStreak, time_seconds:totalSeconds, mode,
+    date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'}) };
   saveGlobalScore(lastEntry);
   showScreen('screen-results');
 }
@@ -1211,53 +1159,28 @@ async function showLeaderboard() {
 function renderLeaderboard(scores) {
   const top10 = scores.slice(0,10);
   const online = sbConfigured;
-
   if (!top10.length) {
     const emptyTxt = currentLang==='en'?'No scores yet — be the first to fly!':'Zatím žádné výsledky — buďte první!';
     document.getElementById('lb-content').innerHTML = `<div class="lb-empty">${emptyTxt}</div>`;
     return;
   }
-
   const h = currentLang==='en'
-    ? { p:'Pilot', s:'Score', c:'Correct', a:'Acc', t:'Time', d:'Date', you:'you' }
-    : { p:'Pilot', s:'Skóre', c:'Správně', a:'Přes.', t:'Čas', d:'Datum', you:'vy' };
+    ? { p:'Pilot',s:'Score',c:'Correct',a:'Acc',t:'Time',d:'Date',you:'you' }
+    : { p:'Pilot',s:'Skóre',c:'Správně',a:'Přes.',t:'Čas',d:'Datum',you:'vy' };
   const rc=['gold','silver','bronze'];
-
   let myRow='';
   if (lastEntry) {
-    const pos = scores.findIndex(s => s.name===lastEntry.name && s.score===lastEntry.score && s.accuracy===lastEntry.accuracy);
-    if (pos>=10) {
-      myRow = `<tr class="my-pos-row"><td class="lb-rank">${pos+1}</td><td class="lb-name me">${esc(lastEntry.name)} ← ${h.you}</td><td class="lb-score">${lastEntry.score}</td><td class="lb-correct">${lastEntry.correct}/10</td><td class="lb-acc">${lastEntry.accuracy}%</td><td class="lb-date">${lastEntry.date}</td></tr>`;
-    }
+    const pos = scores.findIndex(s=>s.name===lastEntry.name&&s.score===lastEntry.score&&s.accuracy===lastEntry.accuracy);
+    if (pos>=10) myRow=`<tr class="my-pos-row"><td class="lb-rank">${pos+1}</td><td class="lb-name me">${esc(lastEntry.name)} ← ${h.you}</td><td class="lb-score">${lastEntry.score}</td><td class="lb-correct">${lastEntry.correct}/10</td><td class="lb-acc">${lastEntry.accuracy}%</td><td class="lb-date">${lastEntry.date}</td></tr>`;
   }
-
-  const rows = top10.map((s,i) => {
-    const isMe = lastEntry && s.name===lastEntry.name && s.score===lastEntry.score && s.accuracy===lastEntry.accuracy;
-    return `<tr${isMe?' class="my-pos-row"':''}>
-      <td class="lb-rank ${i<3?rc[i]:''}">${i+1}</td>
-      <td class="lb-name${isMe?' me':''}">${esc(s.name)}${isMe?` ← ${h.you}`:''}</td>
-      <td class="lb-score">${s.score}</td>
-      <td class="lb-correct">${s.correct}/10</td>
-      <td class="lb-acc">${s.accuracy}%</td>
-      <td class="lb-date">${s.date||''}</td>
-    </tr>`;
+  const rows = top10.map((s,i)=>{
+    const isMe = lastEntry&&s.name===lastEntry.name&&s.score===lastEntry.score&&s.accuracy===lastEntry.accuracy;
+    return `<tr${isMe?' class="my-pos-row"':''}><td class="lb-rank ${i<3?rc[i]:''}">${i+1}</td><td class="lb-name${isMe?' me':''}">${esc(s.name)}${isMe?` ← ${h.you}`:''}</td><td class="lb-score">${s.score}</td><td class="lb-correct">${s.correct}/10</td><td class="lb-acc">${s.accuracy}%</td><td class="lb-date">${s.date||''}</td></tr>`;
   }).join('');
-
   const src = online
     ? `<p class="lb-status">● Live · MySQL · sdílený žebříček</p>`
     : `<p class="lb-status">○ Lokální skóre · vyplň API_URL v quiz.html pro sdílený žebříček</p>`;
-
-  document.getElementById('lb-content').innerHTML = `
-    <table class="lb-table">
-      <thead><tr>
-        <th>#</th><th>${h.p}</th>
-        <th style="text-align:right">${h.s}</th>
-        <th style="text-align:right">${h.c}</th>
-        <th style="text-align:right">${h.a}</th>
-        <th style="text-align:right">${h.d}</th>
-      </tr></thead>
-      <tbody>${rows}${myRow}</tbody>
-    </table>${src}`;
+  document.getElementById('lb-content').innerHTML = `<table class="lb-table"><thead><tr><th>#</th><th>${h.p}</th><th style="text-align:right">${h.s}</th><th style="text-align:right">${h.c}</th><th style="text-align:right">${h.a}</th><th style="text-align:right">${h.d}</th></tr></thead><tbody>${rows}${myRow}</tbody></table>${src}`;
 }
 
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -1285,23 +1208,18 @@ function toggleQuizSound() {
 function stopQuizAudio() {
   if (quizAudio) { quizAudio.pause(); quizAudio.currentTime=0; quizAudio=null; }
   const btn = document.getElementById('sound-btn');
-  if (btn) {
-    btn.classList.remove('playing');
-    const lbl = document.getElementById('sound-btn-label');
-    if (lbl) lbl.textContent = currentLang==='en'?'Play Engine Sound':'Přehrát zvuk motoru';
-  }
+  if (btn) { btn.classList.remove('playing'); const lbl=document.getElementById('sound-btn-label'); if(lbl) lbl.textContent=currentLang==='en'?'Play Engine Sound':'Přehrát zvuk motoru'; }
 }
 
 /* Click sound */
 const _cs = new Audio('assets/click.mp3'); _cs.volume=0.005;
-document.addEventListener('mousedown', ()=>{ const c=_cs.cloneNode(); c.volume=0.005; c.play().catch(()=>{}); });
+document.addEventListener('mousedown',()=>{ const c=_cs.cloneNode(); c.volume=0.005; c.play().catch(()=>{}); });
 window.addEventListener('pagehide', stopQuizAudio);
 
-/* Init home motivation on page load */
+/* Init */
 showHomeMotivation();
-// Pre-fill callsign from cookie
 const _h = getHistory();
-if (_h.callsign) { const inp = document.getElementById('pilot-name'); if(inp) inp.value = _h.callsign; }
+if (_h.callsign) { const inp=document.getElementById('pilot-name'); if(inp) inp.value=_h.callsign; }
 </script>
 </body>
 </html>

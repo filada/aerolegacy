@@ -479,7 +479,7 @@
 <!-- HERO -->
 <section class="hero" id="home">
   <video id="hero-video" autoplay muted playsinline class="hero-video">
-    <source src="assets/header.mp4" type="video/mp4">
+    <source src="https://filada.github.io/aerolegacy/assets/header.mp4" type="video/mp4">
   </video>
   
   <div class="hero-grid"></div>
@@ -674,7 +674,6 @@
     <ul class="feature-list">
       <li data-en="Full 360° rotation &amp; zoom" data-cs="Plná rotace 360° a zoom">Full 360° rotation &amp; zoom</li>
       <li data-en="Authentic instrument panels" data-cs="Autentické přístrojové panely">Authentic instrument panels</li>
-      <li data-en="Available for every featured aircraft" data-cs="Dostupné pro každý vystavený letoun">Available for every featured aircraft</li>
       <li data-en="Works on desktop &amp; mobile" data-cs="Funguje na desktopu i mobilu">Works on desktop &amp; mobile</li>
     </ul>
   </div>
@@ -683,16 +682,23 @@
     <div class="cockpit-container-3d reveal">
       <model-viewer
         id="cockpitModel"
-        src="assets/cockpit.glb"
+        src="https://filada.github.io/aerolegacy/assets/cockpit.glb"
         alt="Interactive Cockpit 3D Model"
-        auto-rotate
         camera-controls
-        enable-pan
+        disable-tap
         shadow-intensity="1.5"
         environment-image="neutral"
         exposure="1.2"
-        camera-orbit="45deg 75deg 105%"
-        field-of-view="35deg"
+        
+        camera-target="0m 0.25m 0m"
+        camera-orbit="-90deg 90deg 0m"
+        min-camera-orbit="auto auto 0m"
+        max-camera-orbit="auto auto 0m"
+        field-of-view="70deg"
+        min-field-of-view="25deg"
+        max-field-of-view="120deg"
+        orientation="0deg 0deg 225deg"
+        
         interaction-prompt="none"
         touch-action="pan-y">
       </model-viewer>
